@@ -14,8 +14,17 @@ async def lookup_drug(name: str) -> str:
         name: The name of the drug to look up.
         
     Returns:
-        JSON string containing {rxcui, generic_name, matched_name, found (bool)}.
     """
+    FDA_BRAND_MAP = {
+        "paracetamol": "acetaminophen",
+        "crocin": "acetaminophen",
+        "dolo": "acetaminophen"
+    }
+    
+    name_lower = name.lower()
+    if name_lower in FDA_BRAND_MAP:
+        name = FDA_BRAND_MAP[name_lower]
+
     base_url = "https://rxnav.nlm.nih.gov/REST"
     async with httpx.AsyncClient() as client:
         # Step A: Get RxCUI
@@ -65,6 +74,34 @@ async def lookup_drug(name: str) -> str:
             "matched_name": matched_name
         })
 
+DRUG_CLASS_MAP = {
+    "amoxicillin": ["amoxicillin", "antibiotic", "penicillin", "antimicrobial"],
+    "pantoprazole": ["pantoprazole", "proton pump", "omeprazole", "esomeprazole"],
+    "acetaminophen": ["acetaminophen", "paracetamol", "analgesic"],
+    "domperidone": ["domperidone", "dopamine"],
+    "aspirin": ["aspirin", "salicylate", "antiplatelet", "nsaid"],
+    "ibuprofen": ["ibuprofen", "nsaid", "anti-inflammatory"],
+    "clarithromycin": ["clarithromycin", "macrolide", "antibiotic"],
+    "metronidazole": ["metronidazole", "antibiotic", "antimicrobial"],
+    "fluconazole": ["fluconazole", "antifungal", "azole"],
+    "simvastatin": ["simvastatin", "statin", "hmg-coa"],
+}
+
+FOOD_INTERACTION_MAP = {
+    "grapefruit": "Avoid grapefruit and grapefruit juice — it can increase drug levels in your blood.",
+    "alcohol": "Avoid alcohol while taking this medication.",
+    "dairy": "Avoid dairy products (milk, cheese, yogurt) within 2 hours of taking this medication.",
+    "vitamin k": "Maintain consistent intake of Vitamin K foods (leafy greens). Sudden changes can affect how this drug works.",
+    "tyramine": "Avoid tyramine-rich foods such as aged cheese, cured meats, and fermented products.",
+    "calcium": "Avoid calcium-rich foods or supplements within 2 hours of this medication.",
+    "antacid": "Do not take antacids within 2 hours of this medication.",
+    "caffeine": "Limit caffeine intake while taking this medication.",
+    "iron": "Avoid iron supplements within 2 hours of this medication.",
+    "fat": "Take this medication with a fatty meal to improve absorption.",
+    "food": "Take this medication with food to reduce stomach upset.",
+    "empty stomach": "Take this medication on an empty stomach for best absorption.",
+}
+
 @mcp.tool()
 async def get_safety_data(generic_name: str, other_meds: list[str]) -> str:
     """
@@ -85,8 +122,29 @@ async def get_safety_data(generic_name: str, other_meds: list[str]) -> str:
         "boxed_warning": False,
         "boxed_warning_text": "",
         "interaction_detected": False,
-        "interactions": []
+        "interactions": [],
+        "fda_missing_data": False,
+        "food_warnings": []
     }
+    
+    FDA_BRAND_MAP = {
+        "paracetamol": "acetaminophen",
+        "crocin": "acetaminophen",
+        "dolo": "acetaminophen"
+    }
+    
+    generic_lower = generic_name.lower() if generic_name else ""
+    if generic_lower in FDA_BRAND_MAP:
+        generic_name = FDA_BRAND_MAP[generic_lower]
+        
+    mapped_other_meds = []
+    for m in other_meds:
+        m_lower = m.lower() if m else ""
+        if m_lower in FDA_BRAND_MAP:
+            mapped_other_meds.append(FDA_BRAND_MAP[m_lower])
+        else:
+            mapped_other_meds.append(m)
+    other_meds = mapped_other_meds
     
     async with httpx.AsyncClient() as client:
         # Step A: openFDA label
@@ -108,22 +166,96 @@ async def get_safety_data(generic_name: str, other_meds: list[str]) -> str:
                         result["boxed_warning"] = True
                         result["boxed_warning_text"] = label["boxed_warning"][0]
                         
-                    # Check interactions using openFDA drug_interactions field
+                    # Check interactions using openFDA drug_interactions field or warnings field
                     import sys
+                    full_text = ""
                     if "drug_interactions" in label:
                         full_text = label["drug_interactions"][0]
+                    elif "warnings" in label:
+                        full_text = label["warnings"][0]
+                        
+                    if full_text:
                         valid_other_meds = [m for m in other_meds if m]
+                        
+                        # DEBUG 1: full list being checked
+                        print(f"\n========== INTERACTION CHECK: {generic_name} ==========", flush=True)
+                        print(f"[DEBUG] other_meds being checked: {valid_other_meds}", flush=True)
+                        
+                        if generic_name.lower() == "warfarin":
+                            print("\n--- WARFARIN DEEP DEBUG ---", flush=True)
+                            print(f"[DEBUG] First 1000 chars of full_text:\n{full_text[:1000]}\n...", flush=True)
+                            test_terms = ["antibiotic", "penicillin", "acetaminophen", "paracetamol", "proton pump", "omeprazole", "antimicrobial"]
+                            lower_full_text = full_text.lower()
+                            for term in test_terms:
+                                found = term in lower_full_text
+                                print(f"[DEBUG] Has '{term}': {found}", flush=True)
+                            print("---------------------------\n", flush=True)
+                        
                         for med in valid_other_meds:
                             lower_full = full_text.lower()
-                            idx = lower_full.find(med.lower())
-                            if idx != -1:
-                                result["interaction_detected"] = True
-                                start = max(0, idx - 100)
-                                end = min(len(full_text), idx + 100)
-                                result["interactions"].append({
-                                    "medication": med,
-                                    "excerpt": full_text[start:end]
-                                })
+                            med_lower = med.lower()
+                            
+                            # 1. Look up in map or fall back to just the name
+                            search_terms = DRUG_CLASS_MAP.get(med_lower, [med_lower])
+                            
+                            # 2. Search for ANY synonym
+                            matched = False
+                            for term in search_terms:
+                                idx = lower_full.find(term)
+                                if idx != -1:
+                                    result["interaction_detected"] = True
+                                    
+                                    # Find sentence boundaries around idx
+                                    sentence_start = 0
+                                    for pos in range(idx - 1, -1, -1):
+                                        if full_text[pos] in ['.', '\n', ';']:
+                                            sentence_start = pos + 1
+                                            break
+                                            
+                                    sentence_end = len(full_text)
+                                    for pos in range(idx, len(full_text)):
+                                        if full_text[pos] in ['.', '\n', ';']:
+                                            sentence_end = pos + 1
+                                            break
+                                            
+                                    excerpt = full_text[sentence_start:sentence_end].strip()
+                                    
+                                    # 4. Record which synonym matched
+                                    result["interactions"].append({
+                                        "medication": med,
+                                        "matched_term": term,
+                                        "excerpt": excerpt
+                                    })
+                                    print(f"[DEBUG] ✅ Interaction found! '{med}' matched via '{term}' in FDA label for '{generic_name}'", flush=True)
+                                    print(f"[DEBUG] Context (200 chars):\n  ...{excerpt}...", flush=True)
+                                    matched = True
+                                    break
+                            
+                            if not matched:
+                                print(f"[DEBUG] ❌ '{med}' NOT found in FDA drug_interactions/warnings for '{generic_name}'", flush=True)
+                        
+                        # Food and Alcohol Interaction Check
+                        for food_term, food_msg in FOOD_INTERACTION_MAP.items():
+                            if food_term in lower_full:
+                                if food_msg not in result["food_warnings"]:
+                                    result["food_warnings"].append(food_msg)
+                                    
+                        print("=" * 55, flush=True)
+                    else:
+                        print(f"[DEBUG] No 'drug_interactions' or 'warnings' field in FDA label for '{generic_name}'", flush=True)
+                        result["fda_missing_data"] = True
+                        missing_msg = f"Safety data for {generic_name} is not available in the FDA database. This drug may not be FDA-approved. Consult your pharmacist for complete interaction information."
+                        result["warnings"] = missing_msg
+                else:
+                    # 200 OK but no results
+                    result["fda_missing_data"] = True
+                    missing_msg = f"Safety data for {generic_name} is not available in the FDA database. This drug may not be FDA-approved. Consult your pharmacist for complete interaction information."
+                    result["warnings"] = missing_msg
+            else:
+                # Non-200 status code (e.g. 404)
+                result["fda_missing_data"] = True
+                missing_msg = f"Safety data for {generic_name} is not available in the FDA database. This drug may not be FDA-approved. Consult your pharmacist for complete interaction information."
+                result["warnings"] = missing_msg
 
     return json.dumps(result)
 

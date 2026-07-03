@@ -1,11 +1,59 @@
 import json
 import asyncio
 import os
+import re
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
 # Import agents
-from agents import parser_agent, lookup_agent, safety_agent, summarizer_agent, apply_guardrails
+from agents import parser_agent, lookup_agent, safety_agent, summarizer_agent, apply_guardrails, ocr_agent
+
+INGREDIENT_GROUPS = {
+    "paracetamol_group": [
+        "acetaminophen", "paracetamol", "tylenol", "panadol",
+        "calpol", "dolo", "crocin"
+    ],
+    "ibuprofen_group": [
+        "ibuprofen", "advil", "nurofen", "brufen"
+    ],
+    "aspirin_group": [
+        "aspirin", "acetylsalicylic acid", "disprin"
+    ],
+    "antacid_group": [
+        "pantoprazole", "omeprazole", "esomeprazole", 
+        "lansoprazole", "rabeprazole"
+    ],
+    "antihistamine_group": [
+        "cetirizine", "loratadine", "fexofenadine", 
+        "chlorpheniramine", "diphenhydramine"
+    ],
+    "antibiotic_group": [
+        "amoxicillin", "azithromycin", "clarithromycin",
+        "doxycycline", "ciprofloxacin", "metronidazole"
+    ],
+}
+
+def check_duplicate_therapy(all_drugs: list) -> list:
+    warnings = []
+    
+    for group_name, group_drugs in INGREDIENT_GROUPS.items():
+        matched_indices = []
+        for i, drug in enumerate(all_drugs):
+            generic = drug.get("generic")
+            if not generic:
+                continue
+            generic_lower = generic.lower()
+            if any(group_drug in generic_lower for group_drug in group_drugs):
+                matched_indices.append(i)
+                
+        if len(matched_indices) >= 2:
+            drugs = [all_drugs[idx] for idx in matched_indices]
+            warnings.append({
+                "drug1": drugs[0]["display"],
+                "drug2": drugs[1]["display"]
+            })
+            
+    return warnings
 
 # Import FastMCP server setup
 from mcp_server import mcp
@@ -36,6 +84,26 @@ class RxPlainHandler(SimpleHTTPRequestHandler):
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
                 self.wfile.write(json.dumps({"error": str(e)}).encode('utf-8'))
+        elif self.path == "/api/ocr":
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length)
+            
+            try:
+                data = json.loads(post_data.decode('utf-8'))
+                base64_image = data.get("image", "")
+                
+                # Call OCR agent directly
+                extracted_text = ocr_agent(base64_image)
+                
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"extracted_text": extracted_text}).encode('utf-8'))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": str(e)}).encode('utf-8'))
         else:
             super().do_POST()
 
@@ -48,59 +116,212 @@ class RxPlainHandler(SimpleHTTPRequestHandler):
         return super().do_GET()
 
     async def run_pipeline(self, prescription: str, other_meds: str):
-        # 1. Parser Agent
-        parsed = parser_agent(prescription)
-        
-        # We will directly call the MCP tool functions for simplicity since it's a single process
-        # This bypasses the stdio overhead and fits "single container, single process"
         from mcp_server import lookup_drug, get_safety_data
         
-        # 2. Lookup Agent
-        drug_name = parsed.get("drug_name")
-        lookup_res_str = await lookup_drug(drug_name)
-        lookup_res = json.loads(lookup_res_str)
-        
-        if not lookup_res.get("found"):
-            return {
-                "success": False,
-                "message": "Drug not recognized. Please check the spelling or consult your pharmacist.",
-                "disclaimer": "This is not medical advice. Confirm all instructions with your pharmacist or doctor before taking any medication."
-            }
+        # Split by numbered entries first (e.g., "1.", "2.")
+        raw_entries = re.split(r'(?:^|\n)\s*\d+\.\s+', prescription)
+        raw_drugs = []
+        for entry in raw_entries:
+            if not entry.strip():
+                continue
+            # Then split by newlines or semicolons
+            sub_entries = [d.strip() for d in re.split(r'[\n;]', entry) if d.strip()]
+            raw_drugs.extend(sub_entries)
             
-        rxcui = lookup_res.get("rxcui")
-        generic_name = lookup_res.get("generic_name")
+        if not raw_drugs:
+            return {"success": False, "message": "No prescription text provided."}
+            
+        parsed_list = []
+        lookup_list = []
         
-        # Lookup other medications to get their generic names
-        other_med_names = []
+        for raw_drug in raw_drugs:
+            parsed = parser_agent(raw_drug)
+            drug_name = parsed.get("drug_name")
+            if not drug_name:
+                # Treat as instruction context modifier for the previous drug
+                if parsed_list:
+                    prev = parsed_list[-1]
+                    if parsed.get("decoded_instruction"):
+                        prev["decoded_instruction"] += f" ({parsed['decoded_instruction']})"
+                    if parsed.get("prn"):
+                        prev["prn"] = True
+                continue
+                
+            lookup_res_str = await lookup_drug(drug_name)
+            lookup_res = json.loads(lookup_res_str)
+            if not lookup_res.get("found"):
+                # If no drug dose was specified, it might be an instruction line (e.g. "After food")
+                if parsed_list and not parsed.get("drug_dose"):
+                    prev = parsed_list[-1]
+                    if parsed.get("decoded_instruction"):
+                        prev["decoded_instruction"] += f" ({raw_drug})"
+                    if parsed.get("prn"):
+                        prev["prn"] = True
+                    continue
+                else:
+                    return {
+                        "success": False,
+                        "message": f"Drug '{drug_name}' not recognized. Please check the spelling.",
+                        "disclaimer": "This is not medical advice. Confirm all instructions with your pharmacist or doctor before taking any medication."
+                    }
+            parsed["display_name"] = parsed.get("display_name") or drug_name
+            parsed["generic_name"] = lookup_res.get("generic_name") or drug_name
+            
+            parsed_list.append(parsed)
+            lookup_list.append(lookup_res)
+            
+        if not parsed_list:
+            return {"success": False, "message": "Could not parse any medications."}
+            
+        # Lookup external other meds
+        external_other_med_names = []
+        external_map = {} # generic_lower -> original input
         if other_meds:
             meds_list = [m.strip() for m in other_meds.split(",") if m.strip()]
             for m in meds_list:
                 m_res_str = await lookup_drug(m)
                 m_res = json.loads(m_res_str)
                 if m_res.get("found") and m_res.get("generic_name"):
-                    other_med_names.append(m_res.get("generic_name"))
+                    gen = m_res.get("generic_name")
+                    external_other_med_names.append(gen)
+                    external_map[gen.lower()] = m
                 else:
-                    other_med_names.append(m)
+                    external_other_med_names.append(m)
+                    external_map[m.lower()] = m
+                    
+        # Safety Agent Loop
+        safety_results = []
+        combined_interactions = []
         
-        # 3. Safety Agent
-        safety_res_str = await get_safety_data(generic_name, other_med_names)
-        safety_res = json.loads(safety_res_str)
-        
-        # If openFDA returned empty warnings, we handle gracefully
-        if not safety_res.get("warnings") and not safety_res.get("boxed_warning"):
-             # It means openFDA had no label or no warnings extracted.
-             pass
-             
+        for i in range(len(lookup_list)):
+            target_generic = lookup_list[i].get("generic_name")
+            
+            # other drugs in prescription after i
+            prescription_other_generics = [
+                lookup_list[j].get("generic_name") for j in range(i+1, len(lookup_list))
+            ]
+            
+            # combine with external
+            drugs_to_check_against = prescription_other_generics + external_other_med_names
+            
+            # Filter to avoid self-matches (exact or substring)
+            filtered_drugs = []
+            target_lower = target_generic.lower() if target_generic else ""
+            for d in drugs_to_check_against:
+                d_lower = d.lower() if d else ""
+                if not d_lower or not target_lower:
+                    filtered_drugs.append(d)
+                    continue
+                if d_lower in target_lower or target_lower in d_lower:
+                    continue
+                filtered_drugs.append(d)
+            
+            drugs_to_check_against = filtered_drugs
+            
+            safety_res_str = await get_safety_data(target_generic, drugs_to_check_against)
+            safety_res = json.loads(safety_res_str)
+            
+            # Attach the drug name so we know who these warnings belong to
+            safety_res["target_drug"] = parsed_list[i].get("display_name")
+            safety_results.append(safety_res)
+            
+            if safety_res.get("interaction_detected"):
+                for interaction in safety_res.get("interactions", []):
+                    interaction["source_drug"] = parsed_list[i].get("display_name")
+                    
+                    # Map interaction medication generic name back to display name
+                    other_generic = interaction.get("medication")
+                    other_generic_lower = other_generic.lower() if other_generic else ""
+                    
+                    found_display = None
+                    for p in parsed_list:
+                        if p.get("generic_name", "").lower() == other_generic_lower:
+                            found_display = p.get("display_name")
+                            break
+                    if not found_display:
+                        found_display = external_map.get(other_generic_lower)
+                        
+                    if found_display:
+                        interaction["medication"] = found_display
+                        
+                    combined_interactions.append(interaction)
+                    
+        # Collect food warnings
+        combined_food_warnings = []
+        for sr in safety_results:
+            for fw in sr.get("food_warnings", []):
+                if fw not in combined_food_warnings:
+                    combined_food_warnings.append(fw)
+                    
+        # Collect side effects for frontend
+        side_effects_list = []
+        for sr in safety_results:
+            drug = sr.get("target_drug")
+            common = sr.get("adverse_reactions", "")
+            serious = sr.get("warnings", "")
+            if sr.get("boxed_warning_text"):
+                serious = "BOXED WARNING: " + sr.get("boxed_warning_text") + "\n\n" + serious
+            if common or serious:
+                side_effects_list.append({
+                    "drugName": drug,
+                    "common": common,
+                    "serious": serious
+                })
+                
+        # Check duplicate therapy
+        all_drugs_for_dup = []
+        for p in parsed_list:
+            all_drugs_for_dup.append({
+                "display": p.get("display_name"),
+                "generic": p.get("generic_name")
+            })
+        for ext_gen in external_other_med_names:
+            ext_gen_lower = ext_gen.lower() if ext_gen else ""
+            original_input = external_map.get(ext_gen_lower, ext_gen)
+            all_drugs_for_dup.append({
+                "display": original_input,
+                "generic": ext_gen
+            })
+        duplicate_warnings = check_duplicate_therapy(all_drugs_for_dup)
+                    
+        # Collect missing fda drugs
+        missing_fda_drugs = []
+        for sr in safety_results:
+            if sr.get("fda_missing_data") and sr.get("target_drug"):
+                missing_fda_drugs.append(sr.get("target_drug"))
+                
+        # Add mealSchedule to each parsed item
+        from agents import get_meal_schedule
+        for p in parsed_list:
+            p["mealSchedule"] = get_meal_schedule(p.get("frequency_raw", ""), p.get("decoded_instruction", ""), p.get("quantity", ""))
+            
         # 4. Summarizer Agent
-        summary = summarizer_agent(parsed, lookup_res, safety_res)
+        summary = summarizer_agent(parsed_list, lookup_list, safety_results, combined_interactions)
         
         # Guardrails
-        guardrails = apply_guardrails(safety_res)
+        guardrails = apply_guardrails(safety_results, combined_interactions)
         
         return {
             "success": True,
             "summary": summary,
-            "guardrails": guardrails
+            "interactionsList": combined_interactions,
+            "missingFdaDrugs": missing_fda_drugs,
+            "medications": parsed_list,
+            "guardrails": guardrails,
+            "foodWarnings": combined_food_warnings,
+            "duplicateWarnings": duplicate_warnings,
+            "sideEffects": side_effects_list,
+            "drugNames": [p.get("display_name") or p.get("drug_name") for p in parsed_list if p.get("display_name") or p.get("drug_name")],
+            "hasDuration": any(p.get("has_duration", False) for p in parsed_list),
+            "frequency": parsed_list[0].get("frequency_raw", "") if parsed_list else "",
+            "frequencyByDrug": {
+                (p.get("display_name") or p.get("drug_name")): p.get("frequency_raw", "")
+                for p in parsed_list if p.get("display_name") or p.get("drug_name")
+            },
+            "durationByDrug": {
+                (p.get("display_name") or p.get("drug_name")): p.get("duration_days", 0)
+                for p in parsed_list if p.get("display_name") or p.get("drug_name")
+            }
         }
 
 def run_server(port=8080):
