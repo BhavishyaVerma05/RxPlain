@@ -26,10 +26,15 @@ async def lookup_drug(name: str) -> str:
         name = FDA_BRAND_MAP[name_lower]
 
     base_url = "https://rxnav.nlm.nih.gov/REST"
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=10.0) as client:
         # Step A: Get RxCUI
-        response = await client.get(f"{base_url}/rxcui.json?name={name}")
-        data = response.json()
+        try:
+            response = await client.get(f"{base_url}/rxcui.json?name={name}")
+            if response.status_code != 200:
+                return json.dumps({"found": False, "rxcui": None, "generic_name": None, "matched_name": None})
+            data = response.json()
+        except Exception as e:
+            return json.dumps({"found": False, "rxcui": None, "generic_name": None, "matched_name": None})
         
         rxcui = None
         matched_name = None
@@ -39,8 +44,13 @@ async def lookup_drug(name: str) -> str:
             matched_name = name
         else:
             # Fallback to approximate term
-            response = await client.get(f"{base_url}/approximateTerm.json?term={name}&maxEntries=1")
-            data = response.json()
+            try:
+                response = await client.get(f"{base_url}/approximateTerm.json?term={name}&maxEntries=1")
+                if response.status_code != 200:
+                    return json.dumps({"found": False, "rxcui": None, "generic_name": None, "matched_name": None})
+                data = response.json()
+            except Exception as e:
+                return json.dumps({"found": False, "rxcui": None, "generic_name": None, "matched_name": None})
             if "approximateGroup" in data and "candidate" in data["approximateGroup"]:
                 candidate = data["approximateGroup"]["candidate"][0]
                 rxcui = candidate["rxcui"]
@@ -56,8 +66,13 @@ async def lookup_drug(name: str) -> str:
             })
             
         # Step B: Get generic name
-        response = await client.get(f"{base_url}/rxcui/{rxcui}/related.json?tty=IN")
-        data = response.json()
+        try:
+            response = await client.get(f"{base_url}/rxcui/{rxcui}/related.json?tty=IN")
+            if response.status_code != 200:
+                return json.dumps({"found": True, "rxcui": rxcui, "generic_name": None, "matched_name": matched_name})
+            data = response.json()
+        except Exception as e:
+            return json.dumps({"found": True, "rxcui": rxcui, "generic_name": None, "matched_name": matched_name})
         generic_name = None
         
         if "relatedGroup" in data and "conceptGroup" in data["relatedGroup"]:
@@ -146,11 +161,16 @@ async def get_safety_data(generic_name: str, other_meds: list[str]) -> str:
             mapped_other_meds.append(m)
     other_meds = mapped_other_meds
     
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=10.0) as client:
         # Step A: openFDA label
         if generic_name:
             fda_url = f"https://api.fda.gov/drug/label.json?search=openfda.generic_name:\"{generic_name}\"&limit=1"
-            response = await client.get(fda_url)
+            try:
+                response = await client.get(fda_url)
+            except Exception:
+                class DummyResponse:
+                    status_code = 500
+                response = DummyResponse()
             if response.status_code == 200:
                 data = response.json()
                 if "results" in data and len(data["results"]) > 0:
@@ -178,21 +198,15 @@ async def get_safety_data(generic_name: str, other_meds: list[str]) -> str:
                         valid_other_meds = [m for m in other_meds if m]
                         
                         # DEBUG 1: full list being checked
-                        print(f"\n========== INTERACTION CHECK: {generic_name} ==========", flush=True)
-                        print(f"[DEBUG] other_meds being checked: {valid_other_meds}", flush=True)
                         
                         if generic_name.lower() == "warfarin":
-                            print("\n--- WARFARIN DEEP DEBUG ---", flush=True)
-                            print(f"[DEBUG] First 1000 chars of full_text:\n{full_text[:1000]}\n...", flush=True)
                             test_terms = ["antibiotic", "penicillin", "acetaminophen", "paracetamol", "proton pump", "omeprazole", "antimicrobial"]
                             lower_full_text = full_text.lower()
                             for term in test_terms:
                                 found = term in lower_full_text
-                                print(f"[DEBUG] Has '{term}': {found}", flush=True)
-                            print("---------------------------\n", flush=True)
                         
+                        lower_full = full_text.lower()
                         for med in valid_other_meds:
-                            lower_full = full_text.lower()
                             med_lower = med.lower()
                             
                             # 1. Look up in map or fall back to just the name
@@ -226,13 +240,11 @@ async def get_safety_data(generic_name: str, other_meds: list[str]) -> str:
                                         "matched_term": term,
                                         "excerpt": excerpt
                                     })
-                                    print(f"[DEBUG] ✅ Interaction found! '{med}' matched via '{term}' in FDA label for '{generic_name}'", flush=True)
-                                    print(f"[DEBUG] Context (200 chars):\n  ...{excerpt}...", flush=True)
                                     matched = True
                                     break
                             
                             if not matched:
-                                print(f"[DEBUG] ❌ '{med}' NOT found in FDA drug_interactions/warnings for '{generic_name}'", flush=True)
+                                pass
                         
                         # Food and Alcohol Interaction Check
                         for food_term, food_msg in FOOD_INTERACTION_MAP.items():
@@ -240,9 +252,7 @@ async def get_safety_data(generic_name: str, other_meds: list[str]) -> str:
                                 if food_msg not in result["food_warnings"]:
                                     result["food_warnings"].append(food_msg)
                                     
-                        print("=" * 55, flush=True)
                     else:
-                        print(f"[DEBUG] No 'drug_interactions' or 'warnings' field in FDA label for '{generic_name}'", flush=True)
                         result["fda_missing_data"] = True
                         missing_msg = f"Safety data for {generic_name} is not available in the FDA database. This drug may not be FDA-approved. Consult your pharmacist for complete interaction information."
                         result["warnings"] = missing_msg

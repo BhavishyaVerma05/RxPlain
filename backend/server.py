@@ -8,6 +8,24 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+REQUIRED_ENV_VARS = [
+    "GROQ_API_KEY", "FIREBASE_API_KEY", "FIREBASE_AUTH_DOMAIN",
+    "FIREBASE_PROJECT_ID", "FIREBASE_STORAGE_BUCKET",
+    "FIREBASE_MESSAGING_SENDER_ID", "FIREBASE_APP_ID"
+]
+missing_vars = [var for var in REQUIRED_ENV_VARS if not os.getenv(var)]
+if missing_vars:
+    import sys
+    print(f"CRITICAL ERROR: Missing required environment variables: {', '.join(missing_vars)}")
+    sys.exit(1)
+import time
+from collections import defaultdict
+
+# IP -> [count, reset_time]
+rate_limits = defaultdict(lambda: [0, 0])
+
+
+
 # Import agents
 from agents import parser_agent, lookup_agent, safety_agent, summarizer_agent, apply_guardrails, ocr_agent
 
@@ -62,8 +80,41 @@ def check_duplicate_therapy(all_drugs: list) -> list:
 from mcp_server import mcp
 
 class RxPlainHandler(SimpleHTTPRequestHandler):
+    def end_headers(self):
+        # Configure CORS
+        allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost,http://127.0.0.1,https://your-cloudrun-url.a.run.app").split(",")
+        origin = self.headers.get("Origin")
+        if origin in allowed_origins:
+            self.send_header("Access-Control-Allow-Origin", origin)
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        super().end_headers()
+        
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self.end_headers()
+
     def do_POST(self):
         if self.path == "/api/translate":
+            # Rate limiting
+            client_ip = self.client_address[0]
+            current_time = time.time()
+            limit_data = rate_limits[client_ip]
+            
+            if current_time > limit_data[1]:
+                # Reset window (1 minute)
+                limit_data[0] = 1
+                limit_data[1] = current_time + 60
+            else:
+                limit_data[0] += 1
+                
+            if limit_data[0] > 10:
+                self.send_response(429)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": "Too many requests. Please wait a moment before translating again."}).encode('utf-8'))
+                return
+
             content_length = int(self.headers['Content-Length'])
             post_data = self.rfile.read(content_length)
             
@@ -71,6 +122,24 @@ class RxPlainHandler(SimpleHTTPRequestHandler):
                 data = json.loads(post_data.decode('utf-8'))
                 prescription_text = data.get("prescription", "")
                 other_meds_text = data.get("other_meds", "")
+                
+                def sanitize_input(text):
+                    if not text: return ""
+                    text = text.strip()
+                    text = re.sub(r'<[^>]*>', '', text)
+                    if len(text) > 2000:
+                        text = text[:2000]
+                    return text
+                
+                prescription_text = sanitize_input(prescription_text)
+                other_meds_text = sanitize_input(other_meds_text)
+                
+                if not prescription_text:
+                    self.send_response(400)
+                    self.send_header('Content-Type', 'application/json')
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"error": "Prescription text cannot be empty."}).encode('utf-8'))
+                    return
                 
                 # We need an event loop for async agents
                 loop = asyncio.new_event_loop()

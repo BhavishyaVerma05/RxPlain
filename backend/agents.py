@@ -2,9 +2,9 @@ import json
 import re
 
 ABBREVIATIONS = {
-    "po": "by mouth", "iv": "intravenously", "im": "intramuscularly", "sc": "under the skin",
+    "po": "by mouth", "oral": "by mouth", "iv": "intravenously", "im": "intramuscularly", "sc": "under the skin",
     "sl": "under the tongue", "top": "applied to skin", "od": "right eye", "os": "left eye",
-    "ou": "both eyes", "bid": "twice a day", "tid": "three times a day", "qid": "four times a day",
+    "ou": "both eyes", "bid": "twice a day", "bd": "twice a day", "tid": "three times a day", "tds": "three times a day", "qid": "four times a day",
     "qd": "once a day", "q4h": "every 4 hours", "q6h": "every 6 hours", "q8h": "every 8 hours",
     "q12h": "every 12 hours", "qam": "every morning", "qpm": "every evening", "qhs": "at bedtime",
     "qod": "every other day", "prn": "as needed", "ac": "before meals", "pc": "after meals",
@@ -115,7 +115,7 @@ def parser_agent(prescription_text: str) -> dict:
             duration_days = num
     
     # Extract frequency raw abbreviation
-    _FREQ_ABBREVS = {"qd", "od", "bid", "tid", "qid", "q4h", "q6h", "q8h", "q12h", "qam", "qpm", "qhs", "qod", "prn", "sos"}
+    _FREQ_ABBREVS = {"qd", "od", "bid", "bd", "tid", "tds", "qid", "q4h", "q6h", "q8h", "q12h", "qam", "qpm", "qhs", "qod", "prn", "sos"}
     frequency_raw = ""
     for word in raw_words:
         if word in _FREQ_ABBREVS:
@@ -170,22 +170,59 @@ def parser_agent(prescription_text: str) -> dict:
         elif not digit_freq or word not in {"1", "0"}: # Don't re-append digits if part of digit freq pattern
             decoded_parts.append(word)
             
+    # Fix up quantity vs duration if "days" "weeks" "months" leaked into quantity
+    duration_str = ""
+    if quantity and any(t in quantity for t in ["day", "week", "month", "wk", "mo"]):
+        duration_str = quantity
+        quantity = ""
+    elif _DUR_NUM:
+        duration_str = _DUR_NUM.group(0).strip()
+    
+    # Extract duration from raw_words if still not found
+    if not duration_str:
+        for i in range(len(raw_words)-1):
+            if raw_words[i].isdigit() and raw_words[i+1] in ["day", "days", "week", "weeks", "month", "months", "wk", "wks", "mo"]:
+                duration_str = f"{raw_words[i]} {raw_words[i+1]}"
+                break
+                
+    # Extract route
+    route_raw = ""
+    for word in raw_words:
+        if word in {"po", "oral", "iv", "im", "sc", "sl", "top"}:
+            route_raw = word
+            break
+    route_decoded = ABBREVIATIONS.get(route_raw, route_raw) if route_raw else ""
+    
+    # Extract frequency
+    freq_decoded = ""
+    if decoded_digit_freq:
+        freq_decoded = decoded_digit_freq
+    elif frequency_raw:
+        if frequency_raw == "od" and has_route:
+            freq_decoded = "once daily"
+        elif frequency_raw == "sos" or frequency_raw == "prn":
+            freq_decoded = "as needed"
+        else:
+            freq_decoded = ABBREVIATIONS.get(frequency_raw, frequency_raw)
+        
+    if prn and not freq_decoded:
+        freq_decoded = "as needed"
+
     result = {
         "drug_name": drug_name,
         "display_name": original_drug_name,
         "drug_dose": drug_dose,
         "quantity": quantity,
-        "route": "",
-        "frequency": "",
-        "duration": "",
+        "route": route_decoded,
+        "frequency": freq_decoded,
+        "duration": duration_str,
         "prn": prn,
-        "has_duration": has_duration,
+        "has_duration": has_duration or bool(duration_str),
         "duration_days": duration_days,
         "frequency_raw": frequency_raw,
         "flags": flags,
         "decoded_instruction": " ".join(decoded_parts)
     }
-    
     return result
 
 async def lookup_agent(drug_name: str, mcp_client) -> dict:
@@ -324,9 +361,6 @@ def summarizer_agent(parsed_list: list, lookup_list: list, safety_results: list,
     {meal_schedule_text}
     """
         
-    print("========== GROQ PROMPT ==========")
-    print(prompt)
-    print("=================================")
     
     api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
@@ -345,7 +379,7 @@ def summarizer_agent(parsed_list: list, lookup_list: list, safety_results: list,
             )
             groq_output = chat_completion.choices[0].message.content
         except Exception as e:
-            groq_output = f"Error during summarization: {str(e)}"
+            groq_output = "Summary unavailable. Please review the structured data above."
             
     return groq_output.strip()
 

@@ -1,1456 +1,13786 @@
 <!DOCTYPE html>
+
+
+
+
+
+
+
 <html lang="en">
+
+
+
+
+
+
+
 <head>
+
+
+
+
+
+
+
     <meta charset="UTF-8">
+
+
+
+
+
+
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+
+
+
+
+
     <title>RxPlain | Prescription Plain-Language Translator</title>
+
+
+
+
+
+
+
     <meta name="description" content="RxPlain translates medical prescription text into clear, plain-language instructions. Understand your medications instantly.">
+
+
+
+
+
+
+
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     <!-- Firebase Compat SDK -->
+
+
+
+
+
+
+
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+
+
+
+
+
+
+
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+
+
+
+
+
+
+
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     <style>
+
+
+
+
+
+
+
         :root {
-            --bg-color: #0f172a;
-            --surface-color: rgba(30, 41, 59, 0.7);
+
+
+
+
+
+
+
+            /* Light theme */
+
+
+
+
+
+
+
+            --bg-color: #f1f5f9;
+
+
+
+
+
+
+
+            --surface-color: rgba(255, 255, 255, 0.8);
+
+
+
+
+
+
+
             --primary: #3b82f6;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
+
+
+
+
+
+
+
+            --text-main: #1e293b;
+
+
+
+
+
+
+
+            --text-muted: #64748b;
+
+
+
+
+
+
+
             --danger: #ef4444;
+
+
+
+
+
+
+
             --danger-bg: rgba(239, 68, 68, 0.1);
+
+
+
+
+
+
+
             --success: #10b981;
-            --border: rgba(255, 255, 255, 0.1);
+
+
+
+
+
+
+
+            --border: rgba(0, 0, 0, 0.1);
+
+
+
+
+
+
+
+            
+
+
+
+
+
+
+
+            --overlay-bg: rgba(255, 255, 255, 0.9);
+
+
+
+
+
+
+
+            --panel-bg: rgba(248, 250, 252, 0.97);
+
+
+
+
+
+
+
+            --input-bg: rgba(255, 255, 255, 0.8);
+
+
+
+
+
+
+
+            
+
+
+
+
+
+
+
+            --btn-sec-bg: rgba(0, 0, 0, 0.04);
+
+
+
+
+
+
+
+            --btn-sec-hover: rgba(0, 0, 0, 0.08);
+
+
+
+
+
+
+
+            --item-bg: rgba(0, 0, 0, 0.02);
+
+
+
+
+
+
+
+            --item-hover: rgba(59, 130, 246, 0.05);
+
+
+
+
+
+
+
+            --close-hover-bg: rgba(0, 0, 0, 0.06);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
             --panel-width: 360px;
+
+
+
+
+
+
+
             --topbar-h: 56px;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        body.dark-mode {
+
+
+
+
+
+
+
+            --bg-color: #0f172a;
+
+
+
+
+
+
+
+            --surface-color: rgba(30, 41, 59, 0.7);
+
+
+
+
+
+
+
+            --text-main: #f8fafc;
+
+
+
+
+
+
+
+            --text-muted: #94a3b8;
+
+
+
+
+
+
+
+            --border: rgba(255, 255, 255, 0.1);
+
+
+
+
+
+
+
+            
+
+
+
+
+
+
+
+            --overlay-bg: rgba(15, 23, 42, 0.88);
+
+
+
+
+
+
+
+            --panel-bg: rgba(12, 20, 38, 0.97);
+
+
+
+
+
+
+
+            --input-bg: rgba(15, 23, 42, 0.6);
+
+
+
+
+
+
+
+            
+
+
+
+
+
+
+
+            --btn-sec-bg: rgba(255, 255, 255, 0.06);
+
+
+
+
+
+
+
+            --btn-sec-hover: rgba(255, 255, 255, 0.11);
+
+
+
+
+
+
+
+            --item-bg: rgba(255, 255, 255, 0.04);
+
+
+
+
+
+
+
+            --item-hover: rgba(59, 130, 246, 0.08);
+
+
+
+
+
+
+
+            --close-hover-bg: rgba(255, 255, 255, 0.07);
+
+
+
+
+
+
+
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         * { box-sizing: border-box; }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         body {
+
+
+
+
+
+
+
             margin: 0; padding: 0;
+
+
+
+
+
+
+
             font-family: 'Outfit', sans-serif;
+
+
+
+
+
+
+
             background-color: var(--bg-color);
+
+
+
+
+
+
+
             background-image:
+
+
+
+
+
+
+
                 radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.15), transparent 25%),
+
+
+
+
+
+
+
                 radial-gradient(circle at 85% 30%, rgba(16, 185, 129, 0.15), transparent 25%);
+
+
+
+
+
+
+
             color: var(--text-main);
+
+
+
+
+
+
+
             min-height: 100vh;
+
+
+
+
+
+
+
+            transition: background-color 0.3s, color 0.3s;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         /* ── LOGIN ── */
+
+
+
+
+
+
+
         #login-overlay {
+
+
+
+
+
+
+
             position: fixed; inset: 0;
+
+
+
+
+
+
+
             background: var(--bg-color);
+
+
+
+
+
+
+
             background-image:
+
+
+
+
+
+
+
                 radial-gradient(circle at 20% 40%, rgba(59,130,246,0.2), transparent 30%),
+
+
+
+
+
+
+
                 radial-gradient(circle at 80% 65%, rgba(16,185,129,0.2), transparent 30%);
+
+
+
+
+
+
+
             display: flex; align-items: center; justify-content: center;
+
+
+
+
+
+
+
             z-index: 1000;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         .login-card {
+
+
+
+
+
+
+
             background: var(--surface-color);
+
+
+
+
+
+
+
             backdrop-filter: blur(20px);
+
+
+
+
+
+
+
             border: 1px solid var(--border); border-radius: 24px;
+
+
+
+
+
+
+
             padding: 3rem; text-align: center;
+
+
+
+
+
+
+
             max-width: 420px; width: 90%;
+
+
+
+
+
+
+
             box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+
+
+
+
+
+
+
             animation: fadeInUp 0.45s ease-out;
+
+
+
+
+
+
+
         }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         .login-logo {
+
+
+
+
+
+
+
             font-size: 2.8rem; font-weight: 700;
+
+
+
+
+
+
+
             background: linear-gradient(to right, #60a5fa, #34d399);
+
+
+
+
+
+
+
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+
+
+
+
+
+
+
             letter-spacing: -1px;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         .login-tagline { color: var(--text-muted); font-size: 1rem; margin: 0.25rem 0 2.5rem; }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         .google-btn {
+
+
+
+
+
+
+
             display: flex; align-items: center; justify-content: center; gap: 0.75rem;
+
+
+
+
+
+
+
             width: 100%; background: white; color: #374151;
+
+
+
+
+
+
+
             border: none; border-radius: 10px;
+
+
+
+
+
+
+
             padding: 0.875rem 1.5rem; font-size: 1rem; font-weight: 600;
+
+
+
+
+
+
+
             font-family: 'Outfit', sans-serif; cursor: pointer;
+
+
+
+
+
+
+
             transition: all 0.2s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         .google-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.4); }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         /* ── TOP BAR ── */
+
+
+
+
+
+
+
         #top-bar {
+
+
+
+
+
+
+
             position: fixed; top: 0; left: 0; right: 0; height: var(--topbar-h);
-            background: rgba(15,23,42,0.88); backdrop-filter: blur(16px);
+
+
+
+
+
+
+
+            background: var(--overlay-bg); backdrop-filter: blur(16px);
+
+
+
+
+
+
+
             border-bottom: 1px solid var(--border);
+
+
+
+
+
+
+
             display: flex; align-items: center; justify-content: space-between;
+
+
+
+
+
+
+
             padding: 0 1.5rem; z-index: 100;
+
+
+
+
+
+
+
         }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         #top-brand {
+
+
+
+
+
+
+
             font-size: 1.1rem; font-weight: 700;
+
+
+
+
+
+
+
             background: linear-gradient(to right, #60a5fa, #34d399);
+
+
+
+
+
+
+
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         #top-right { display: flex; align-items: center; gap: 0.6rem; }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         .tb-btn {
-            background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+
+
+
+
+
+
+
+            background: var(--btn-sec-bg); border: 1px solid var(--border);
+
+
+
+
+
+
+
             color: var(--text-muted); border-radius: 8px;
+
+
+
+
+
+
+
             padding: 0.35rem 0.75rem; font-size: 0.82rem;
+
+
+
+
+
+
+
             font-family: 'Outfit', sans-serif; font-weight: 600;
+
+
+
+
+
+
+
             cursor: pointer; transition: all 0.18s;
+
+
+
+
+
+
+
             display: flex; align-items: center; gap: 0.4rem;
+
+
+
+
+
+
+
             position: relative;
+
+
+
+
+
+
+
         }
 
-        .tb-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.11); }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        .tb-btn:hover { color: var(--text-main); background: var(--btn-sec-hover); }
+
+
+
+
+
+
+
         .tb-btn.active { color: var(--primary); border-color: var(--primary); background: rgba(59,130,246,0.1); }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         #notif-badge {
+
+
+
+
+
+
+
             position: absolute; top: -5px; right: -5px;
+
+
+
+
+
+
+
             background: var(--danger); color: white; border-radius: 50%;
+
+
+
+
+
+
+
             width: 16px; height: 16px; font-size: 9px; font-weight: 700;
+
+
+
+
+
+
+
             display: none; align-items: center; justify-content: center;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         #notif-badge.show { display: flex; }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         #user-chip {
+
+
+
+
+
+
+
             display: flex; align-items: center; gap: 0.5rem;
-            background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+
+
+
+
+
+
+
+            background: var(--btn-sec-bg); border: 1px solid var(--border);
+
+
+
+
+
+
+
             border-radius: 50px; padding: 0.2rem 0.75rem 0.2rem 0.2rem;
+
+
+
+
+
+
+
         }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         #user-avatar {
+
+
+
+
+
+
+
             width: 26px; height: 26px; border-radius: 50%; object-fit: cover;
+
+
+
+
+
+
+
             background: rgba(59,130,246,0.3);
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         #user-name { font-size: 0.82rem; color: var(--text-main); max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         /* ── SIDE PANELS ── */
+
+
+
+
+
+
+
         .side-panel {
+
+
+
+
+
+
+
             position: fixed; top: var(--topbar-h); right: 0; bottom: 0;
+
+
+
+
+
+
+
             width: var(--panel-width);
-            background: rgba(12,20,38,0.97); backdrop-filter: blur(20px);
+
+
+
+
+
+
+
+            background: var(--panel-bg); backdrop-filter: blur(20px);
+
+
+
+
+
+
+
             border-left: 1px solid var(--border);
+
+
+
+
+
+
+
             transform: translateX(100%);
+
+
+
+
+
+
+
             transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+
+
+
+
+
+
+
             overflow-y: auto; z-index: 90;
+
+
+
+
+
+
+
             display: flex; flex-direction: column;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         .side-panel.open { transform: translateX(0); }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         .panel-hdr {
+
+
+
+
+
+
+
             padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--border);
+
+
+
+
+
+
+
             font-weight: 700; font-size: 0.95rem;
+
+
+
+
+
+
+
             display: flex; align-items: center; justify-content: space-between;
-            position: sticky; top: 0; background: rgba(12,20,38,0.99); z-index: 1;
+
+
+
+
+
+
+
+            position: sticky; top: 0; background: var(--panel-bg); z-index: 1;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         .panel-close {
+
+
+
+
+
+
+
             background: none; border: none; color: var(--text-muted);
+
+
+
+
+
+
+
             cursor: pointer; font-size: 1.1rem; padding: 0.2rem 0.4rem;
+
+
+
+
+
+
+
             border-radius: 4px; transition: color 0.2s; width: auto;
+
+
+
+
+
+
+
         }
 
-        .panel-close:hover { color: var(--text-main); background: rgba(255,255,255,0.07); transform: none; box-shadow: none; filter: none; }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        .panel-close:hover { color: var(--text-main); background: var(--close-hover-bg); transform: none; box-shadow: none; filter: none; }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         .panel-body { padding: 1rem; flex: 1; }
+
+
+
+
+
+
+
         .panel-empty { color: var(--text-muted); font-size: 0.88rem; text-align: center; padding: 2rem 0.5rem; line-height: 1.6; }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         /* History */
+
+
+
+
+
+
+
         .hist-item {
-            background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+
+
+
+
+
+
+
+            background: var(--item-bg); border: 1px solid var(--border);
+
+
+
+
+
+
+
             border-radius: 10px; padding: 0.9rem 1rem;
+
+
+
+
+
+
+
             margin-bottom: 0.65rem; cursor: pointer; transition: all 0.2s;
+
+
+
+
+
+
+
         }
 
-        .hist-item:hover { background: rgba(59,130,246,0.08); border-color: rgba(59,130,246,0.3); }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        .hist-item:hover { background: var(--item-hover); border-color: rgba(59,130,246,0.3); }
+
+
+
+
+
+
+
         .hist-drugs { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-bottom: 0.45rem; }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         .drug-chip {
+
+
+
+
+
+
+
             background: rgba(59,130,246,0.15); color: #93c5fd;
+
+
+
+
+
+
+
             border: 1px solid rgba(59,130,246,0.25); border-radius: 50px;
+
+
+
+
+
+
+
             padding: 0.12rem 0.55rem; font-size: 0.72rem; font-weight: 600;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         .hist-date { color: var(--text-muted); font-size: 0.75rem; }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         /* Reminders */
+
+
+
+
+
+
+
         .notif-item {
-            background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+
+
+
+
+
+
+
+            background: var(--item-bg); border: 1px solid var(--border);
+
+
+
+
+
+
+
             border-radius: 10px; padding: 0.9rem 1rem; margin-bottom: 0.65rem;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         .notif-drug { font-weight: 600; margin-bottom: 0.3rem; font-size: 0.93rem; }
+
+
+
+
+
+
+
         .notif-times { color: var(--text-muted); font-size: 0.82rem; margin-bottom: 0.3rem; }
+
+
+
+
+
+
+
         .notif-expiry { font-size: 0.78rem; margin-bottom: 0.7rem; }
+
+
+
+
+
+
+
         .notif-expiry.ongoing { color: var(--success); }
+
+
+
+
+
+
+
         .notif-expiry.expiring { color: #fbbf24; }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         .cancel-btn {
+
+
+
+
+
+
+
             background: none; border: 1px solid rgba(239,68,68,0.4);
+
+
+
+
+
+
+
             color: #f87171; border-radius: 6px;
+
+
+
+
+
+
+
             padding: 0.28rem 0.7rem; font-size: 0.78rem;
+
+
+
+
+
+
+
             font-family: 'Outfit', sans-serif;
+
+
+
+
+
+
+
             cursor: pointer; transition: all 0.18s; width: auto;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         .cancel-btn:hover { background: rgba(239,68,68,0.1); transform: none; box-shadow: none; filter: none; }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        #notif-panel {
+
+
+
+
+
+
+
+            padding: 0;
+
+
+
+
+
+
+
+            overflow-x: hidden;
+
+
+
+
+
+
+
+            overflow-y: auto;
+
+
+
+
+
+
+
+        }
+
+
+
+
+
+
+
+        #notif-panel .notif-side {
+
+
+
+
+
+
+
+            width: 100%;
+
+
+
+
+
+
+
+            display: flex;
+
+
+
+
+
+
+
+            flex-direction: column;
+
+
+
+
+
+
+
+        }
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+        @media (max-width: 1099px) { .notif-right .panel-close { display: none; } }
+
+
+
+
+
+
+
+        @media (min-width: 1100px) {
+
+
+
+
+
+
+
+            #notif-panel {
+
+
+
+
+
+
+
+                width: 100vw; max-width: 100vw;
+
+
+
+
+
+
+
+                left: 0; right: 0;
+
+
+
+
+
+
+
+                background: transparent;
+
+
+
+
+
+
+
+                border: none;
+
+
+
+
+
+
+
+                box-shadow: none;
+
+
+
+
+
+
+
+                pointer-events: none;
+
+
+
+
+
+
+
+                display: flex;
+
+
+
+
+
+
+
+                flex-direction: row;
+
+
+
+
+
+
+
+                justify-content: space-between;
+
+
+
+
+
+
+
+                transform: none !important; 
+
+
+
+
+
+
+
+                visibility: hidden;
+
+
+
+
+
+
+
+                overflow: hidden;
+
+
+
+
+
+
+
+            }
+
+
+
+
+
+
+
+            #notif-panel.open {
+
+
+
+
+
+
+
+                visibility: visible;
+
+
+
+
+
+
+
+            }
+
+
+
+
+
+
+
+            #notif-panel .notif-side {
+
+
+
+
+
+
+
+                pointer-events: auto;
+
+
+
+
+
+
+
+                background: var(--bg-color);
+
+
+
+
+
+
+
+                width: max(350px, calc(50vw - 400px));
+
+
+
+
+
+
+
+                height: 100%;
+
+
+
+
+
+
+
+                display: flex;
+
+
+
+
+
+
+
+                flex-direction: column;
+
+
+
+
+
+
+
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+
+
+
+
+
+
+                overflow-y: auto;
+
+
+
+
+
+
+
+            }
+
+
+
+
+
+
+
+            #notif-panel .notif-left {
+
+
+
+
+
+
+
+                transform: translateX(-100%);
+
+
+
+
+
+
+
+                border-right: 1px solid var(--border);
+
+
+
+
+
+
+
+                box-shadow: 4px 0 24px rgba(0,0,0,0.5);
+
+
+
+
+
+
+
+            }
+
+
+
+
+
+
+
+            #notif-panel .notif-right {
+
+
+
+
+
+
+
+                transform: translateX(100%);
+
+
+
+
+
+
+
+                border-left: 1px solid var(--border);
+
+
+
+
+
+
+
+                box-shadow: -4px 0 24px rgba(0,0,0,0.5);
+
+
+
+
+
+
+
+            }
+
+
+
+
+
+
+
+            #notif-panel.open .notif-left, #notif-panel.open .notif-right {
+
+
+
+
+
+
+
+                transform: translateX(0);
+
+
+
+
+
+
+
+            }
+
+
+
+
+
+
+
+        }
+
+
+
+
+
+
+
+        .cal-tile {
+
+
+
+
+
+
+
+            background: var(--item-bg);
+
+
+
+
+
+
+
+            border: 2px solid var(--border);
+
+
+
+
+
+
+
+            border-radius: 8px;
+
+
+
+
+
+
+
+            padding: 0.5rem 0.2rem;
+
+
+
+
+
+
+
+            text-align: center;
+
+
+
+
+
+
+
+            font-size: 0.8rem;
+
+
+
+
+
+
+
+            display: flex;
+
+
+
+
+
+
+
+            flex-direction: column;
+
+
+
+
+
+
+
+            gap: 0.3rem;
+
+
+
+
+
+
+
+        }
+
+
+
+
+
+
+
+        .cal-tile.today { border-color: var(--primary); }
+
+
+
+
+
+
+
+        .cal-tile.green { background: rgba(16,185,129,0.15); border-color: var(--success); color: var(--success); }
+
+
+
+
+
+
+
+        .cal-tile.amber { background: rgba(245,158,11,0.15); border-color: #f59e0b; color: #f59e0b; }
+
+
+
+
+
+
+
+        .cal-tile.red   { background: rgba(239,68,68,0.15); border-color: var(--danger); color: var(--danger); }
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+        .dose-group { margin-bottom: 1.5rem; }
+
+
+
+
+
+
+
+        .dose-time { font-weight: 700; font-size: 1.1rem; border-bottom: 1px solid var(--border); margin-bottom: 0.5rem; padding-bottom: 0.25rem; }
+
+
+
+
+
+
+
+        .dose-item { display: flex; justify-content: space-between; align-items: center; background: var(--item-bg); padding: 0.75rem; border-radius: 8px; margin-bottom: 0.5rem; }
+
+
+
+
+
+
+
+        .btn-taken { background: transparent; border: 1px solid var(--border); color: var(--text-main); border-radius: 6px; padding: 0.3rem 0.75rem; font-size: 0.8rem; cursor: pointer; transition: all 0.2s; }
+
+
+
+
+
+
+
+        .btn-taken:hover:not(:disabled) { background: rgba(16,185,129,0.1); border-color: var(--success); color: var(--success); }
+
+
+
+
+
+
+
+        .btn-taken:disabled { background: rgba(16,185,129,0.15); border-color: var(--success); color: var(--success); cursor: default; opacity: 1; }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        /* Slider toggle */
+
+
+
+
+
+
+
+        .slider:before {
+
+
+
+
+
+
+
+            position: absolute; content: ""; height: 16px; width: 16px;
+
+
+
+
+
+
+
+            left: 2px; bottom: 2px; background-color: white;
+
+
+
+
+
+
+
+            transition: .4s; border-radius: 50%;
+
+
+
+
+
+
+
+        }
+
+
+
+
+
+
+
+        input:checked + .slider { background-color: var(--primary); }
+
+
+
+
+
+
+
+        input:checked + .slider:before { transform: translateX(20px); }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         /* ── MAIN ── */
-        #main-app { display: none; min-height: 100vh; }
+
+
+
+
+
+
+
+        #main-app { display: none; min-height: 100vh;
+
+
+
+
+
+
+
+            transition: background-color 0.3s, color 0.3s; }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         .app-wrap { display: flex; flex-direction: column; align-items: center; padding-top: var(--topbar-h); }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         .container { width: 100%; max-width: 800px; margin: 4rem auto; padding: 0 2rem; }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         header { text-align: center; margin-bottom: 3rem; }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         h1 {
+
+
+
+
+
+
+
             font-size: 3rem; margin: 0;
+
+
+
+
+
+
+
             background: linear-gradient(to right, #60a5fa, #34d399);
+
+
+
+
+
+
+
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+
+
+
+
+
+
+
             letter-spacing: -1px;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         p.subtitle { color: var(--text-muted); font-size: 1.1rem; margin-top: 0.5rem; }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         .glass-panel {
+
+
+
+
+
+
+
             background: var(--surface-color); backdrop-filter: blur(12px);
+
+
+
+
+
+
+
             -webkit-backdrop-filter: blur(12px);
+
+
+
+
+
+
+
             border: 1px solid var(--border); border-radius: 16px; padding: 2.5rem;
+
+
+
+
+
+
+
             box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         .form-group { margin-bottom: 1.5rem; }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-main); font-size: 0.95rem; }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         textarea {
-            width: 100%; background: rgba(15,23,42,0.6);
+
+
+
+
+
+
+
+            width: 100%; background: var(--input-bg);
+
+
+
+
+
+
+
             border: 1px solid var(--border); border-radius: 8px;
+
+
+
+
+
+
+
             padding: 1rem; color: var(--text-main);
+
+
+
+
+
+
+
             font-family: 'Outfit', sans-serif; font-size: 1rem;
+
+
+
+
+
+
+
             resize: vertical; transition: border-color 0.2s, box-shadow 0.2s;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59,130,246,0.25); }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         button {
+
+
+
+
+
+
+
             width: 100%; background: linear-gradient(135deg, var(--primary), #4f46e5);
+
+
+
+
+
+
+
             color: white; border: none; border-radius: 8px;
+
+
+
+
+
+
+
             padding: 1rem; font-size: 1.1rem; font-weight: 600;
+
+
+
+
+
+
+
             font-family: 'Outfit', sans-serif; cursor: pointer;
+
+
+
+
+
+
+
             transition: all 0.2s ease; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         button:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); filter: brightness(1.1); }
+
+
+
+
+
+
+
         button:active { transform: translateY(0); }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         .btn-secondary {
-            background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+
+
+
+
+
+
+
+            background: var(--btn-sec-bg); border: 1px solid var(--border);
+
+
+
+
+
+
+
             color: var(--text-main); margin-top: 1.5rem;
+
+
+
+
+
+
+
         }
-        .btn-secondary:hover { background: rgba(255,255,255,0.11); transform: translateY(-2px); filter: brightness(1.1); }
+
+
+
+
+
+
+
+        .btn-secondary:hover { background: var(--btn-sec-hover); transform: translateY(-2px); filter: brightness(1.1); }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         .spinner {
+
+
+
+
+
+
+
             display: none; margin: 2rem auto; width: 40px; height: 40px;
+
+
+
+
+
+
+
             border: 4px solid rgba(255,255,255,0.1); border-radius: 50%;
+
+
+
+
+
+
+
             border-top-color: var(--primary); animation: spin 1s ease-in-out infinite;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         @keyframes spin { to { transform: rotate(360deg); } }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         #results-section { display: none; margin-top: 2rem; animation: fadeIn 0.5s ease-out; }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         @keyframes fadeIn  { from { opacity: 0; transform: translateY(10px); }  to { opacity: 1; transform: translateY(0); } }
+
+
+
+
+
+
+
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         .risk-banner {
+
+
+
+
+
+
+
             background: var(--danger-bg); border-left: 4px solid var(--danger);
+
+
+
+
+
+
+
             padding: 1.5rem; border-radius: 0 8px 8px 0; margin-bottom: 1.5rem; display: none;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         .risk-banner h3 { color: var(--danger); margin-top: 0; display: flex; align-items: center; gap: 0.5rem; }
+
+
+
+
+
+
+
         .risk-banner ul { margin: 0.5rem 0 1.5rem; padding-left: 1.5rem; color: #fca5a5; }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         .ack-button {
+
+
+
+
+
+
+
             background: transparent; border: 1px solid var(--danger);
+
+
+
+
+
+
+
             color: var(--danger); width: auto; padding: 0.5rem 1.5rem; font-size: 0.95rem;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         .ack-button:hover { background: var(--danger); color: white; }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         .summary-box {
-            background: rgba(15,23,42,0.8); border: 1px solid var(--border);
+
+
+
+
+
+
+
+            background: var(--surface-color); border: 1px solid var(--border);
+
+
+
+
+
+
+
             border-radius: 8px; padding: 1.5rem;
+
+
+
+
+
+
+
             font-size: 1.05rem; line-height: 1.7; display: none; white-space: pre-wrap;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         .summary-box.visible { display: block; }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         #active-meds-notice {
+
+
+
+
+
+
+
             background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.4);
+
+
+
+
+
+
+
             border-radius: 8px; padding: 0.75rem 1rem;
+
+
+
+
+
+
+
             color: var(--success); font-size: 0.88rem; font-weight: 600;
+
+
+
+
+
+
+
             margin-bottom: 1.5rem; display: none; align-items: center; gap: 0.6rem;
+
+
+
+
+
+
+
         }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         @keyframes highlightPulse {
+
+
+
+
+
+
+
             0%   { border-color: var(--success); box-shadow: 0 0 0 3px rgba(16,185,129,0.35); background: rgba(16,185,129,0.08); }
-            100% { border-color: var(--border);  box-shadow: none; background: rgba(15,23,42,0.6); }
+
+
+
+
+
+
+
+            100% { border-color: var(--border);  box-shadow: none; background: var(--input-bg); }
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         textarea.auto-filled { animation: highlightPulse 1.8s ease-out forwards; }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         .upload-btn {
+
+
+
+
+
+
+
             background: rgba(59,130,246,0.15); color: var(--primary);
+
+
+
+
+
+
+
             border: 1px solid var(--primary); border-radius: 6px;
+
+
+
+
+
+
+
             padding: 0.22rem 0.7rem; font-size: 0.82rem;
+
+
+
+
+
+
+
             cursor: pointer; display: flex; align-items: center; gap: 0.25rem;
+
+
+
+
+
+
+
             transition: all 0.2s ease; width: auto;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         .upload-btn:hover { background: var(--primary); color: white; transform: none; box-shadow: none; filter: none; }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+
+
+
+
+
+
+
         .header-flex label { margin-bottom: 0; }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         .ocr-msg { display: none; color: var(--success); font-size: 0.84rem; margin-top: 0.5rem; font-weight: 600; }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         .disclaimer { margin-top: 3rem; text-align: center; color: var(--text-muted); font-size: 0.85rem; max-width: 600px; }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         /* Toast */
+
+
+
+
+
+
+
         #rx-toast {
+
+
+
+
+
+
+
             position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
-            background: rgba(30,41,59,0.97); color: var(--text-main);
+
+
+
+
+
+
+
+            background: var(--surface-color); color: var(--text-main);
+
+
+
+
+
+
+
             padding: 0.8rem 1.4rem; border-radius: 10px; font-size: 0.92rem;
+
+
+
+
+
+
+
             font-family: 'Outfit', sans-serif;
+
+
+
+
+
+
+
             box-shadow: 0 8px 25px rgba(0,0,0,0.5); border: 1px solid var(--border);
+
+
+
+
+
+
+
             z-index: 300; opacity: 0; pointer-events: none;
+
+
+
+
+
+
+
             transition: opacity 0.35s ease; white-space: nowrap;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
         #rx-toast.show { opacity: 1; }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         /* ── ICON BAR & TAB VIEWS ── */
+
+
+
+
+
+
+
         .icon-bar {
+
+
+
+
+
+
+
             display: flex;
+
+
+
+
+
+
+
             align-items: center;
+
+
+
+
+
+
+
             justify-content: space-between;
-            background: rgba(15,23,42,0.9);
+
+
+
+
+
+
+
+            background: var(--surface-color);
+
+
+
+
+
+
+
             border: 1px solid var(--border);
+
+
+
+
+
+
+
             border-radius: 12px;
+
+
+
+
+
+
+
             padding: 0.5rem 1rem;
+
+
+
+
+
+
+
             margin-top: 1rem;
+
+
+
+
+
+
+
             margin-bottom: 1.5rem;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         .icon-btn {
+
+
+
+
+
+
+
             position: relative;
+
+
+
+
+
+
+
             background: transparent;
+
+
+
+
+
+
+
             border: none;
+
+
+
+
+
+
+
             color: var(--text-muted);
+
+
+
+
+
+
+
             padding: 0.75rem;
+
+
+
+
+
+
+
             border-radius: 8px;
+
+
+
+
+
+
+
             cursor: pointer;
+
+
+
+
+
+
+
             transition: all 0.2s ease;
+
+
+
+
+
+
+
             display: flex;
+
+
+
+
+
+
+
             align-items: center;
+
+
+
+
+
+
+
             justify-content: center;
+
+
+
+
+
+
+
             font-size: 1.2rem;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         .icon-btn:hover {
-            background: rgba(255,255,255,0.05);
+
+
+
+
+
+
+
+            background: var(--btn-sec-hover);
+
+
+
+
+
+
+
             color: var(--text-main);
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         .icon-btn.active {
+
+
+
+
+
+
+
             background: rgba(59, 130, 246, 0.15);
+
+
+
+
+
+
+
             color: var(--primary);
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         .icon-badge {
+
+
+
+
+
+
+
             position: absolute;
+
+
+
+
+
+
+
             top: 4px;
+
+
+
+
+
+
+
             right: 4px;
+
+
+
+
+
+
+
             width: 14px;
+
+
+
+
+
+
+
             height: 14px;
+
+
+
+
+
+
+
             border-radius: 50%;
+
+
+
+
+
+
+
             display: flex;
+
+
+
+
+
+
+
             align-items: center;
+
+
+
+
+
+
+
             justify-content: center;
+
+
+
+
+
+
+
             font-size: 0.65rem;
+
+
+
+
+
+
+
             font-weight: bold;
+
+
+
+
+
+
+
             color: white;
+
+
+
+
+
+
+
             border: 2px solid var(--bg-color);
+
+
+
+
+
+
+
             opacity: 0;
+
+
+
+
+
+
+
             pointer-events: none;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
         
+
+
+
+
+
+
+
         .icon-badge.show { opacity: 1; }
+
+
+
+
+
+
+
         
+
+
+
+
+
+
+
         .badge-red { background: var(--danger); }
+
+
+
+
+
+
+
         .badge-amber { background: #f59e0b; }
+
+
+
+
+
+
+
         .badge-green { background: var(--success); }
+
+
+
+
+
+
+
         .badge-grey { background: #64748b; }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         /* TAB VIEWS */
+
+
+
+
+
+
+
         .tab-content {
+
+
+
+
+
+
+
             display: none;
+
+
+
+
+
+
+
             animation: fadeIn 0.3s ease-out;
-            background: rgba(15,23,42,0.6);
+
+
+
+
+
+
+
+            background: var(--input-bg);
+
+
+
+
+
+
+
             border: 1px solid var(--border);
+
+
+
+
+
+
+
             border-radius: 12px;
+
+
+
+
+
+
+
             padding: 1.5rem;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         .tab-content.active {
+
+
+
+
+
+
+
             display: block;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         .instructions-list {
+
+
+
+
+
+
+
             list-style: none;
+
+
+
+
+
+
+
             padding: 0;
+
+
+
+
+
+
+
             margin: 0;
+
+
+
+
+
+
+
             line-height: 1.8;
+
+
+
+
+
+
+
             font-size: 1.05rem;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         .instructions-list li {
+
+
+
+
+
+
+
             margin-bottom: 0.5rem;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         .interaction-item {
+
+
+
+
+
+
+
             margin-bottom: 1rem;
+
+
+
+
+
+
+
             padding: 1rem;
+
+
+
+
+
+
+
             background: rgba(239, 68, 68, 0.05);
+
+
+
+
+
+
+
             border-left: 3px solid var(--danger);
+
+
+
+
+
+
+
             border-radius: 0 6px 6px 0;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         .interaction-text {
+
+
+
+
+
+
+
             color: var(--text-main);
+
+
+
+
+
+
+
             margin-bottom: 0.5rem;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         .interaction-detail {
+
+
+
+
+
+
+
             color: var(--text-muted);
+
+
+
+
+
+
+
             font-size: 0.9rem;
+
+
+
+
+
+
+
             display: none;
+
+
+
+
+
+
+
             margin-top: 0.5rem;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         .se-drug-block {
+
+
+
+
+
+
+
             margin-bottom: 1.5rem;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         .se-drug-name {
+
+
+
+
+
+
+
             font-size: 1.1rem;
+
+
+
+
+
+
+
             color: var(--primary);
+
+
+
+
+
+
+
             margin: 0 0 0.5rem 0;
+
+
+
+
+
+
+
             border-bottom: 1px solid var(--border);
+
+
+
+
+
+
+
             padding-bottom: 0.25rem;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         .se-section {
+
+
+
+
+
+
+
             margin-bottom: 1rem;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         .se-label-common {
+
+
+
+
+
+
+
             color: var(--text-muted);
+
+
+
+
+
+
+
             font-size: 0.85rem;
+
+
+
+
+
+
+
             text-transform: uppercase;
+
+
+
+
+
+
+
             letter-spacing: 1px;
+
+
+
+
+
+
+
             margin-bottom: 0.25rem;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         .se-label-serious {
+
+
+
+
+
+
+
             color: #b45309;
+
+
+
+
+
+
+
             font-size: 0.85rem;
+
+
+
+
+
+
+
             text-transform: uppercase;
+
+
+
+
+
+
+
             letter-spacing: 1px;
+
+
+
+
+
+
+
             margin-bottom: 0.25rem;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
         
+
+
+
+
+
+
+
         .se-list {
+
+
+
+
+
+
+
             margin: 0;
+
+
+
+
+
+
+
             padding-left: 1.5rem;
+
+
+
+
+
+
+
             color: var(--text-muted);
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         .se-serious-box {
+
+
+
+
+
+
+
             background: rgba(254,243,199,0.1);
+
+
+
+
+
+
+
             border-left: 3px solid #f59e0b;
+
+
+
+
+
+
+
             padding: 0.75rem;
+
+
+
+
+
+
+
             border-radius: 0 6px 6px 0;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         .se-serious-list {
+
+
+
+
+
+
+
             margin: 0;
+
+
+
+
+
+
+
             padding-left: 1.5rem;
+
+
+
+
+
+
+
             color: #fef3c7;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         .food-list {
+
+
+
+
+
+
+
             margin: 0;
+
+
+
+
+
+
+
             padding-left: 1.5rem;
+
+
+
+
+
+
+
             color: #a7f3d0;
+
+
+
+
+
+
+
             line-height: 1.6;
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         .missing-list {
+
+
+
+
+
+
+
             margin: 0.5rem 0 0;
+
+
+
+
+
+
+
             padding-left: 1.5rem;
+
+
+
+
+
+
+
             color: var(--text-muted);
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
     </style>
+
+
+
+
+
+
+
 </head>
-<body>
+
+
+
+
+
+
+
+<body class="dark-mode">
+
+
+
+
+
+
+
+<script>
+
+
+
+
+
+
+
+if(localStorage.getItem("theme") === "light") document.body.classList.remove("dark-mode");
+
+
+
+
+
+
+
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 <!-- ===== LOGIN ===== -->
+
+
+
+
+
+
+
 <div id="login-overlay">
+
+
+
+
+
+
+
     <div class="login-card">
+
+
+
+
+
+
+
         <div class="login-logo">RxPlain</div>
+
+
+
+
+
+
+
         <p class="login-tagline">Your AI-powered prescription translator</p>
+
+
+
+
+
+
+
         <button class="google-btn" onclick="signInWithGoogle()">
+
+
+
+
+
+
+
             <svg width="20" height="20" viewBox="0 0 48 48">
+
+
+
+
+
+
+
                 <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+
+
+
+
+
+
+
                 <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+
+
+
+
+
+
+
                 <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+
+
+
+
+
+
+
                 <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+
+
+
+
+
+
+
             </svg>
+
+
+
+
+
+
+
             Sign in with Google
+
         </button>
+
+
+
+        <button class="google-btn" style="margin-top: 1rem; background: var(--surface-color); color: var(--text-main); border: 1px solid var(--border);" onclick="continueAsGuest()">
+
+
+
+
+
+
+
+            Continue as Guest
+
+
+
+
+
+
+
+        </button>
+
+
+
+
+
+
+
     </div>
+
+
+
+
+
+
+
 </div>
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <!-- ===== MAIN APP ===== -->
+
+
+
+
+
+
+
 <div id="main-app">
-    <div id="top-bar">
-        <div id="top-brand">RxPlain</div>
-        <div id="top-right">
-            <button class="tb-btn" id="notif-btn" onclick="togglePanel('notif')">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                Reminders
-                <span id="notif-badge"></span>
-            </button>
-            <button class="tb-btn" id="history-btn" onclick="togglePanel('history')">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 0 .5-4"/><polyline points="3 3 3 7 7 7"/></svg>
-                History
-            </button>
-            <div id="user-chip">
-                <img id="user-avatar" src="" alt="avatar">
-                <span id="user-name"></span>
-            </div>
-            <button class="tb-btn" onclick="handleSignOut()">Sign Out</button>
-        </div>
+
+
+
+
+
+
+
+    <div id="guest-banner" style="display: none; background: #f59e0b; color: white; padding: 0.5rem 1rem; text-align: center; font-size: 0.9rem; font-weight: 600; position: fixed; bottom: 0; left: 0; right: 0; z-index: 1001; align-items: center; justify-content: center; gap: 1rem;">
+
+
+
+
+
+
+
+        You are using guest mode. Your data will be lost when you close this tab.
+
+
+
+
+
+
+
+        <button onclick="handleSignOut()" style="background: white; color: #f59e0b; border: none; padding: 0.2rem 0.6rem; border-radius: 4px; font-weight: bold; cursor: pointer; width: auto; box-shadow: none;">Sign In</button>
+
+
+
+
+
+
+
     </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="top-bar">
+
+
+
+
+
+
+
+        <div id="top-brand">RxPlain</div>
+
+
+
+
+
+
+
+        <div id="top-right">
+
+
+
+
+
+
+
+            <button class="tb-btn" id="notif-btn" onclick="togglePanel('notif')">
+
+
+
+
+
+
+
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+
+
+
+
+
+
+
+                Reminders
+
+
+
+
+
+
+
+                <span id="notif-badge"></span>
+
+
+
+
+
+
+
+            </button>
+
+
+
+
+
+
+
+            <button class="tb-btn" id="history-btn" onclick="togglePanel('history')">
+
+
+
+
+
+
+
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 0 .5-4"/><polyline points="3 3 3 7 7 7"/></svg>
+
+
+
+
+
+
+
+                History
+
+
+
+
+
+
+
+            </button>
+
+
+
+
+
+
+
+            <button class="tb-btn" id="user-chip" onclick="togglePanel('profile')" style="padding: 0.2rem 0.75rem 0.2rem 0.2rem; border-radius: 50px;">
+
+
+
+
+
+
+
+                <img id="user-avatar" src="" alt="avatar">
+
+
+
+
+
+
+
+                <span id="user-name"></span>
+
+
+
+
+
+
+
+            </button>
+
+
+
+
+
+
+
+        </div>
+
+
+
+
+
+
+
+    </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     <!-- History Panel -->
+
+
+
+
+
+
+
     <div class="side-panel" id="history-panel">
+
+
+
+
+
+
+
         <div class="panel-hdr">
-            <span>📋 Prescription History</span>
+
+
+
+
+
+
+
+            <span>🕒 Prescription History</span>
+
+
+
+
+
+
+
             <button class="panel-close" onclick="togglePanel('history')">✕</button>
+
+
+
+
+
+
+
         </div>
+
+
+
+
+
+
+
         <div class="panel-body" id="history-list">
+
+
+
+
+
+
+
             <p class="panel-empty">No past prescriptions yet.</p>
+
+
+
+
+
+
+
         </div>
+
+
+
+
+
+
+
     </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     <!-- Reminders Panel -->
+
+
+
     <div class="side-panel" id="notif-panel">
-        <div class="panel-hdr">
-            <span>🔔 Active Reminders</span>
-            <button class="panel-close" onclick="togglePanel('notif')">✕</button>
-        </div>
-        <div class="panel-body" id="notif-list">
-            <p class="panel-empty">No active reminders.</p>
-        </div>
-    </div>
 
-    <div class="app-wrap">
-        <div class="container">
-            <header>
-                <h1>RxPlain</h1>
-                <p class="subtitle">Prescription Plain-Language Translator</p>
-            </header>
 
-            <div class="glass-panel">
-                <div id="active-meds-notice">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                    Active medications from your history have been pre-filled below.
+
+
+
+
+
+        <div class="notif-side notif-left">
+
+
+
+            <div class="panel-hdr">
+
+
+
+                <span>📅 Reminders</span>
+
+
+
+                <button class="panel-close" style="display: none;" onclick="togglePanel('notif')">✕</button>
+
+
+
+            </div>
+
+
+
+            <div class="panel-body" id="reminders-col">
+
+
+
+                <h3 style="margin-top: 0;">Today's Doses</h3>
+
+
+
+                <div id="notif-list">
+
+
+
+                    <p class="panel-empty">No active reminders.</p>
+
+
+
                 </div>
 
-                <form id="rx-form">
-                    <div class="form-group">
-                        <div class="header-flex">
-                            <label for="prescription">Enter prescription text</label>
-                            <input type="file" id="prescription-image" accept="image/*" style="display:none;">
-                            <button type="button" class="upload-btn" onclick="document.getElementById('prescription-image').click()">
-                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                                Upload Image
-                            </button>
+
+
+            </div>
+
+
+
+        </div>
+
+
+
+
+
+
+
+        <div class="notif-side notif-right">
+
+
+
+            <div class="panel-hdr">
+
+
+
+                <span>🔥 Streak</span>
+
+
+
+                <button class="panel-close" onclick="togglePanel('notif')">✕</button>
+
+
+
+            </div>
+
+
+
+            <div id="streak-header" style="text-align: center; padding: 1rem; background: var(--item-bg); border-bottom: 1px solid var(--border); font-size: 1.1rem; font-weight: bold;">
+
+
+
+                Start your streak today!
+
+
+
+            </div>
+
+
+
+            <div class="panel-body" id="calendar-col" style="display: flex; flex-direction: column; gap: 1.5rem; overflow-y: auto;">
+
+
+
+                <div>
+
+
+
+                    <h3 style="margin-top: 0; display: flex; justify-content: space-between; align-items: center;">
+
+
+
+                        <span id="cal-week-label">This Week</span>
+
+
+
+                        <div>
+
+
+
+                            <button class="tb-btn" style="padding: 0.2rem 0.5rem; display: inline-flex;" onclick="changeWeek(-1)">◀</button>
+
+
+
+                            <button class="tb-btn" style="padding: 0.2rem 0.5rem; display: inline-flex;" onclick="changeWeek(1)">▶</button>
+
+
+
                         </div>
-                        <textarea id="prescription" rows="4" placeholder="e.g. Warfarin 5mg, 1 tab po qd&#10;Amoxicillin 500mg, 1 cap po tid x7d&#10;(one drug per line for multi-drug)" required></textarea>
-                        <div id="ocr-msg" class="ocr-msg">✅ Text extracted — please review and correct before submitting.</div>
+
+
+
+                    </h3>
+
+
+
+                    <div id="weekly-calendar" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem;">
+
+
+
+                        <!-- Calendar tiles -->
+
+
+
                     </div>
 
-                    <div class="form-group">
-                        <label for="other-meds">Other current medications <span style="color:var(--text-muted);font-weight:400;">(optional, comma-separated)</span></label>
-                        <textarea id="other-meds" rows="2" placeholder="e.g. Aspirin, Metformin"></textarea>
+
+
+                    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.75rem; font-size: 0.75rem; color: var(--text-muted);">
+
+
+
+                        <span>🟩 All taken</span>
+
+
+
+                        <span>🟧 Partial</span>
+
+
+
+                        <span>🟥 Missed</span>
+
+
+
+                        <span>⬜ Future</span>
+
+
+
                     </div>
+
+
+
+                </div>
+
+
+
+                <div style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+
+
+
+                    <h3 style="margin-top: 0; margin-bottom: 0.75rem;">30-Day History</h3>
+
+
+
+                    <div id="streak-history-list" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 0.4rem;">
+
+
+
+                        <p class="panel-empty" style="margin: 0; padding: 1rem 0;">No dose history yet.</p>
+
+
+
+                    </div>
+
+
+
+                </div>
+
+
+
+            </div>
+
+
+
+        </div>
+
+
+
+
+
+
+
+    </div>
+
+
+
+
+
+
+
+    <!-- Profile Panel -->
+
+
+
+    <div class="side-panel" id="profile-panel">
+
+
+
+        <div class="panel-hdr">
+
+
+
+            <span>👤 User Profile</span>
+
+
+
+            <button class="panel-close" onclick="togglePanel('profile')">✕</button>
+
+
+
+        </div>
+
+
+
+        <div class="panel-body">
+
+
+
+            <div style="margin-bottom: 2rem;">
+
+
+
+                <label>Display Name</label>
+
+
+
+                <div style="display: flex; gap: 0.5rem;">
+
+
+
+                    <input type="text" id="profile-name-input" style="flex: 1; background: var(--input-bg); border: 1px solid var(--border); border-radius: 8px; padding: 0.5rem; color: var(--text-main); font-family: 'Outfit', sans-serif;">
+
+
+
+                    <button onclick="saveDisplayName()" id="save-name-btn" style="width: auto; padding: 0.5rem 1rem;">Save</button>
+
+
+
+                </div>
+
+
+
+            </div>
+
+
+
+
+
+
+
+            <div style="margin-bottom: 2rem;">
+
+
+
+                <label>Appearance</label>
+
+
+
+                <div style="display: flex; align-items: center; justify-content: space-between; background: var(--item-bg); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+
+
+
+                    <span>Dark Mode</span>
+
+
+
+                    <label class="switch" style="position: relative; display: inline-block; width: 40px; height: 20px; margin: 0;">
+
+
+
+                        <input type="checkbox" id="theme-toggle" onchange="toggleTheme()" style="opacity: 0; width: 0; height: 0; position: absolute;">
+
+
+
+                        <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border); transition: .4s; border-radius: 20px;"></span>
+
+
+
+                    </label>
+
+
+
+                </div>
+
+
+
+            </div>
+
+
+
+
+
+
+
+            <div style="margin-bottom: 2rem;">
+
+
+
+                <label>Account</label>
+
+
+
+                <div id="auth-account-actions">
+
+
+
+                    <button class="btn-secondary" onclick="handleSignOut()" style="margin-top: 0; margin-bottom: 0.5rem;">Sign Out</button>
+
+
+
+                    <div id="delete-account-container">
+
+
+
+                        <button class="btn-secondary" style="margin-top: 0; color: #ef4444; border-color: rgba(239,68,68,0.4);" onclick="showDeleteConfirm()">Delete Account</button>
+
+
+
+                    </div>
+
+
+
+                    <div id="delete-account-confirm" style="display: none; background: var(--danger-bg); border: 1px solid var(--danger); padding: 1rem; border-radius: 8px; margin-top: 0.5rem;">
+
+
+
+                        <p style="color: #ef4444; font-size: 0.9rem; margin-top: 0; font-weight: 600;">This will permanently delete your account and all saved prescriptions. This cannot be undone.</p>
+
+
+
+                        <div style="display: flex; gap: 0.5rem;">
+
+
+
+                            <button class="btn-secondary" style="margin-top: 0; flex: 1;" onclick="hideDeleteConfirm()">Cancel</button>
+
+
+
+                            <button style="background: var(--danger); flex: 1; margin-top: 0;" onclick="deleteAccount()">Delete Permanently</button>
+
+
+
+                        </div>
+
+
+
+                    </div>
+
+
+
+                </div>
+
+
+
+                <div id="guest-account-actions" style="display: none;">
+
+
+
+                    <button class="btn-secondary" onclick="handleSignOut()" style="margin-top: 0;">Sign In</button>
+
+
+
+                </div>
+
+
+
+            </div>
+
+
+
+        </div>
+
+
+
+    </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class="app-wrap">
+
+
+
+
+
+
+
+        <div class="container">
+
+
+
+
+
+
+
+            <header>
+
+
+
+
+
+
+
+                <h1>RxPlain</h1>
+
+
+
+
+
+
+
+                <p class="subtitle">Prescription Plain-Language Translator</p>
+
+
+
+
+
+
+
+            </header>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            <div class="glass-panel">
+
+
+
+
+
+
+
+                <div id="active-meds-notice">
+
+
+
+
+
+
+
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+
+
+
+
+
+
+
+                    Active medications from your history have been pre-filled below.
+
+
+
+
+
+
+
+                </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                <form id="rx-form">
+
+
+
+
+
+
+
+                    <div class="form-group">
+
+
+
+
+
+
+
+                        <div class="header-flex">
+
+
+
+
+
+
+
+                            <label for="prescription">Enter prescription text</label>
+
+
+
+
+
+
+
+                            <input type="file" id="prescription-image" accept="image/*" style="display:none;">
+
+
+
+
+
+
+
+                            <button type="button" class="upload-btn" onclick="document.getElementById('prescription-image').click()">
+
+
+
+
+
+
+
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+
+
+
+
+
+
+
+                                Upload Image
+
+
+
+
+
+
+
+                            </button>
+
+
+
+
+
+
+
+                        </div>
+
+
+
+
+
+
+
+                        <textarea id="prescription" rows="4" placeholder="e.g. Warfarin 5mg, 1 tab po qd&#10;Amoxicillin 500mg, 1 cap po tid x7d&#10;(one drug per line for multi-drug)" required></textarea>
+
+
+
+
+
+
+
+        <div id="ocr-msg" class="ocr-msg">✅ Text extracted — please review and correct before submitting.</div>
+
+
+
+
+
+
+
+                    </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                    <div class="form-group">
+
+
+
+
+
+
+
+                        <label for="other-meds">Other current medications <span style="color:var(--text-muted);font-weight:400;">(optional, comma-separated)</span></label>
+
+
+
+
+
+
+
+                        <textarea id="other-meds" rows="2" placeholder="e.g. Aspirin, Metformin"></textarea>
+
+
+
+
+
+
+
+                    </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
                     <button type="submit" id="submit-btn">Translate Prescription</button>
+
+
+
+
+
+
+
                 </form>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
                 <div class="spinner" id="loading-spinner"></div>
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                 <div id="results-section">
+
+
+
+
+
+
+
                     <div id="cards-container"></div>
+
+
+
+
+
+
+
                     <button class="btn-secondary" onclick="resetForm()" style="width:100%;">+ Add New Prescription</button>
+
+
+
+
+
+
+
                 </div>
+
+
+
+
+
+
+
             </div>
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
             <div class="disclaimer">
+
+
+
+
+
+
+
                 This is not medical advice. Confirm all instructions with your pharmacist or doctor before taking any medication.
+
+
+
+
+
+
+
             </div>
+
+
+
+
+
+
+
         </div>
+
+
+
+
+
+
+
     </div>
+
+
+
+
+
+
+
 </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 <div id="rx-toast"></div>
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <script>
+
+
+
+
+
+
+
   // ===== FIREBASE =====
+
+
+
+
+
+
+
   let auth;
+
+
+
+
+
+
+
   let db;
+
+
+
+
+
+
+
   let currentUser      = null;
+
+
+
+
+
+
+
+  let isGuest          = false;
+
+
+
+
+
+
+
   let activeReminders  = [];
-  let reminderTimeouts = [];
+
+
+
+
+
+
+
+  let reminderTimeouts = {};
+
+
+
+
+
+
+
+  let doseHistory = {};
+
+
+
+
+
+
+
+  let currentWeekOffset = 0;
+
+
+
+
+
+
+
+  let allRemindersHistory = [];
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   (async function initApp() {
+
+
+
+
+
+
+
       try {
+
+
+
+
+
+
+
           const config = await fetch('/api/config').then(r => r.json());
+
+
+
+
+
+
+
           firebase.initializeApp(config);
+
+
+
+
+
+
+
           auth = firebase.auth();
+
+
+
+
+
+
+
           db   = firebase.firestore();
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
           // ===== AUTH =====
+
+
+
+
+
+
+
           auth.onAuthStateChanged(async user => {
-              if (user) {
+
+
+
+
+
+
+
+              if (user && !isGuest) {
+
+
+
+
+
+
+
                   currentUser = user;
+
+
+
+
+
+
+
                   document.getElementById('login-overlay').style.display = 'none';
+
+
+
+
+
+
+
                   document.getElementById('main-app').style.display     = 'block';
+
+
+
+
+
+
+
                   if (user.photoURL) document.getElementById('user-avatar').src = user.photoURL;
+
+
+
+
+
+
+
                   document.getElementById('user-name').textContent = user.displayName || user.email;
+
+
+
+
+
+
+
+        document.getElementById('profile-name-input').value = user.displayName || '';
+
+
+
+
+
+
+
+        document.getElementById('theme-toggle').checked = document.body.classList.contains('dark-mode');
+
+
+
+
+
+
+
           
+
+
+
+
+
+
+
                   await requestNotifPermission();
+
+
+
+
+
+
+
                   await Promise.all([loadHistory(user.uid), loadAndScheduleReminders(user.uid)]);
+
+
+
+
+
+
+
           
+
+
+
+
+
+
+
                   const meds = await getActiveMedications(user.uid);
+
+
+
+
+
+
+
                   if (meds.length > 0) {
+
+
+
+
+
+
+
                       populateActiveMeds(meds);
+
+
+
+
+
+
+
                   }
+
+
+
+
+
+
+
               } else {
+
+
+
+
+
+
+
                   currentUser = null;
+
+
+
+
+
+
+
                   document.getElementById('login-overlay').style.display = 'flex';
+
+
+
+
+
+
+
                   document.getElementById('main-app').style.display     = 'none';
+
+
+
+
+
+
+
               }
+
+
+
+
+
+
+
           });
+
+
+
+
+
+
+
       } catch (err) {
+
+
+
+
+
+
+
           console.error("Failed to initialize Firebase:", err);
+
+
+
+
+
+
+
       }
+
+
+
+
+
+
+
   })();
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 function signInWithGoogle() {
+
+
+
+
+
+
+
+    isGuest = false;
+
+
+
+
+
+
+
     auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())
+
+
+
+
+
+
+
         .catch(e => showToast('❌ ' + e.message));
+
+
+
+
+
+
+
 }
 
-function handleSignOut() { auth.signOut(); }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function handleSignOut() {
+
+
+
+
+
+
+
+    isGuest = false;
+
+
+
+
+
+
+
+    auth.signOut();
+
+
+
+
+
+
+
+    document.getElementById('guest-banner').style.display = 'none';
+
+
+
+
+
+
+
+    document.getElementById('history-btn').style.display = 'flex';
+
+
+
+
+
+
+
+    document.getElementById('notif-btn').style.display = 'flex';
+
+
+
+
+
+
+
+    document.getElementById('auth-account-actions').style.display = 'block';
+
+
+
+
+
+
+
+    document.getElementById('guest-account-actions').style.display = 'none';
+
+
+
+
+
+
+
+    document.getElementById('profile-name-input').disabled = false;
+
+
+
+
+
+
+
+    document.getElementById('save-name-btn').disabled = false;
+
+
+
+
+
+
+
+    currentUser = null;
+
+
+
+
+
+
+
+    document.getElementById('login-overlay').style.display = 'flex';
+
+
+
+
+
+
+
+    document.getElementById('main-app').style.display = 'none';
+
+
+
+
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function continueAsGuest() {
+
+
+
+
+
+
+
+    isGuest = true;
+
+
+
+
+
+
+
+    document.getElementById('login-overlay').style.display = 'none';
+
+
+
+
+
+
+
+    document.getElementById('main-app').style.display = 'block';
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+    // UI adjustments for guest mode
+
+
+
+
+
+
+
+    document.getElementById('guest-banner').style.display = 'flex';
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+    // Hide panels
+
+
+
+
+
+
+
+    document.getElementById('history-btn').style.display = 'none';
+
+
+
+
+
+
+
+    document.getElementById('notif-btn').style.display = 'none';
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+    // Set guest user chip and profile panel
+
+
+
+
+
+
+
+    document.getElementById('user-avatar').src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%2394a3b8"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>';
+
+
+
+
+
+
+
+    document.getElementById('user-name').textContent = 'Guest';
+
+
+
+
+
+
+
+    document.getElementById('profile-name-input').value = 'Guest';
+
+
+
+
+
+
+
+    document.getElementById('profile-name-input').disabled = true;
+
+
+
+
+
+
+
+    document.getElementById('save-name-btn').disabled = true;
+
+
+
+
+
+
+
+    document.getElementById('auth-account-actions').style.display = 'none';
+
+
+
+
+
+
+
+    document.getElementById('guest-account-actions').style.display = 'block';
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+    // Load guest meds from sessionStorage
+
+
+
+
+
+
+
+    const meds = getGuestMeds();
+
+
+
+
+
+
+
+    if (meds.length > 0) {
+
+
+
+
+
+
+
+        populateActiveMeds(meds);
+
+
+
+
+
+
+
+    }
+
+
+
+
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function getGuestMeds() {
+
+
+
+
+
+
+
+    const data = sessionStorage.getItem('guestMeds');
+
+
+
+
+
+
+
+    return data ? JSON.parse(data) : [];
+
+
+
+
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ===== PROFILE LOGIC =====
+
+
+
+
+
+
+
+function showDeleteConfirm() {
+
+
+
+
+
+
+
+    document.getElementById('delete-account-container').style.display = 'none';
+
+
+
+
+
+
+
+    document.getElementById('delete-account-confirm').style.display = 'block';
+
+
+
+
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function hideDeleteConfirm() {
+
+
+
+
+
+
+
+    document.getElementById('delete-account-confirm').style.display = 'none';
+
+
+
+
+
+
+
+    document.getElementById('delete-account-container').style.display = 'block';
+
+
+
+
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+async function saveDisplayName() {
+
+
+
+
+
+
+
+    if (isGuest || !currentUser) return;
+
+
+
+
+
+
+
+    const input = document.getElementById('profile-name-input');
+
+
+
+
+
+
+
+    const newName = input.value.trim();
+
+
+
+
+
+
+
+    if (!newName) return;
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+    const btn = document.getElementById('save-name-btn');
+
+
+
+
+
+
+
+    btn.textContent = '...';
+
+
+
+
+
+
+
+    btn.disabled = true;
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+    try {
+
+
+
+
+
+
+
+        await currentUser.updateProfile({ displayName: newName });
+
+
+
+
+
+
+
+        document.getElementById('user-name').textContent = newName;
+
+
+
+
+
+
+
+        showToast('✅ Profile updated');
+
+
+
+
+
+
+
+    } catch (e) {
+
+
+
+
+
+
+
+        showToast('❌ Error: ' + e.message);
+
+
+
+
+
+
+
+    } finally {
+
+
+
+
+
+
+
+        btn.textContent = 'Save';
+
+
+
+
+
+
+
+        btn.disabled = false;
+
+
+
+
+
+
+
+    }
+
+
+
+
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function toggleTheme() {
+
+
+
+
+
+
+
+    const isDark = document.getElementById('theme-toggle').checked;
+
+
+
+
+
+
+
+    if (isDark) {
+
+
+
+
+
+
+
+        document.body.classList.add('dark-mode');
+
+
+
+
+
+
+
+        localStorage.setItem('theme', 'dark');
+
+
+
+
+
+
+
+    } else {
+
+
+
+
+
+
+
+        document.body.classList.remove('dark-mode');
+
+
+
+
+
+
+
+        localStorage.setItem('theme', 'light');
+
+
+
+
+
+
+
+    }
+
+
+
+
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+async function deleteAccount() {
+
+
+
+
+
+
+
+    if (isGuest || !currentUser) return;
+
+
+
+
+
+
+
+    const uid = currentUser.uid;
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+    try {
+
+
+
+
+
+
+
+        // Delete all prescriptions
+
+
+
+
+
+
+
+        const rxSnap = await db.collection('users').doc(uid).collection('prescriptions').get();
+
+
+
+
+
+
+
+        const batch = db.batch();
+
+
+
+
+
+
+
+        rxSnap.forEach(doc => batch.delete(doc.ref));
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+        // Delete all reminders
+
+
+
+
+
+
+
+        const remSnap = await db.collection('users').doc(uid).collection('reminders').get();
+
+
+
+
+
+
+
+        remSnap.forEach(doc => batch.delete(doc.ref));
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+        await batch.commit();
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+        // Delete user doc
+
+
+
+
+
+
+
+        await db.collection('users').doc(uid).delete();
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+        // Delete auth account
+
+
+
+
+
+
+
+        await currentUser.delete();
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+        showToast('✅ Account deleted');
+
+
+
+
+
+
+
+        hideDeleteConfirm();
+
+
+
+
+
+
+
+        togglePanel('profile'); // close panel
+
+
+
+
+
+
+
+    } catch (e) {
+
+
+
+
+
+
+
+        showToast('❌ Error: ' + e.message);
+
+
+
+
+
+
+
+        console.error(e);
+
+
+
+
+
+
+
+        // If requires recent login, sign out so they can log back in and try again
+
+
+
+
+
+
+
+        if (e.code === 'auth/requires-recent-login') {
+
+
+
+
+
+
+
+            showToast('⚠️ Please log in again to delete your account.');
+
+
+
+
+
+
+
+            handleSignOut();
+
+
+
+
+
+
+
+        }
+
+
+
+
+
+
+
+    }
+
+
+
+
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // ===== PANELS =====
+
+
+
+
+
+
+
 function togglePanel(which) {
-    const hp = document.getElementById('history-panel');
-    const np = document.getElementById('notif-panel');
-    const hb = document.getElementById('history-btn');
-    const nb = document.getElementById('notif-btn');
-    if (which === 'history') {
-        const open = hp.classList.toggle('open');
-        np.classList.remove('open');
-        hb.classList.toggle('active', open);
-        nb.classList.remove('active');
-    } else {
-        const open = np.classList.toggle('open');
-        hp.classList.remove('open');
-        nb.classList.toggle('active', open);
-        hb.classList.remove('active');
+
+
+
+
+
+
+
+    const panels = ['history', 'notif', 'profile'];
+
+
+
+
+
+
+
+    const pEls = {
+
+
+
+
+
+
+
+        'history': document.getElementById('history-panel'),
+
+
+
+
+
+
+
+        'notif': document.getElementById('notif-panel'),
+
+
+
+
+
+
+
+        'profile': document.getElementById('profile-panel')
+
+
+
+
+
+
+
+    };
+
+
+
+
+
+
+
+    const bEls = {
+
+
+
+
+
+
+
+        'history': document.getElementById('history-btn'),
+
+
+
+
+
+
+
+        'notif': document.getElementById('notif-btn'),
+
+
+
+
+
+
+
+        'profile': document.getElementById('user-chip')
+
+
+
+
+
+
+
+    };
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+    // Close on escape
+
+
+
+
+
+
+
+    if (!window._escListener) {
+
+
+
+
+
+
+
+        window._escListener = (e) => {
+
+
+
+
+
+
+
+            if (e.key === 'Escape') {
+
+
+
+
+
+
+
+                panels.forEach(p => pEls[p] && pEls[p].classList.remove('open'));
+
+
+
+
+
+
+
+                panels.forEach(p => bEls[p] && bEls[p].classList.remove('active'));
+
+
+
+
+
+
+
+            }
+
+
+
+
+
+
+
+        };
+
+
+
+
+
+
+
+        document.addEventListener('keydown', window._escListener);
+
+
+
+
+
+
+
     }
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+    panels.forEach(p => {
+
+
+
+
+
+
+
+        if (p === which) {
+
+
+
+
+
+
+
+            const open = pEls[p].classList.toggle('open');
+
+
+
+
+
+
+
+            if (bEls[p]) bEls[p].classList.toggle('active', open);
+
+
+
+
+
+
+
+        } else {
+
+
+
+
+
+
+
+            pEls[p].classList.remove('open');
+
+
+
+
+
+
+
+            if (bEls[p]) bEls[p].classList.remove('active');
+
+
+
+
+
+
+
+        }
+
+
+
+
+
+
+
+    });
+
+
+
+
+
+
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Close panel when clicking outside
+
+
+
+
+
+
+
+document.addEventListener('click', (e) => {
+
+
+
+
+
+
+
+    if (e.target.closest('.side-panel') || e.target.closest('.tb-btn')) return;
+
+
+
+
+
+
+
+    document.querySelectorAll('.side-panel').forEach(p => p.classList.remove('open'));
+
+
+
+
+
+
+
+    document.querySelectorAll('.tb-btn').forEach(b => b.classList.remove('active'));
+
+
+
+
+
+
+
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // ===== HISTORY =====
+
+
+
+
+
+
+
 async function saveTranslation(uid, prescriptionText, data) {
+
+
+
+
+
+
+
+    if (isGuest) {
+
+
+
+
+
+
+
+        if (data.drugNames && data.drugNames.length > 0) {
+
+
+
+
+
+
+
+            let meds = getGuestMeds();
+
+
+
+
+
+
+
+            for (const d of data.drugNames) {
+
+
+
+
+
+
+
+                if (!meds.some(m => m.drugName.toLowerCase() === d.toLowerCase())) {
+
+
+
+
+
+
+
+                    meds.push({ drugName: d });
+
+
+
+
+
+
+
+                }
+
+
+
+
+
+
+
+            }
+
+
+
+
+
+
+
+            sessionStorage.setItem('guestMeds', JSON.stringify(meds));
+
+
+
+
+
+
+
+        }
+
+
+
+
+
+
+
+        return "guest-id";
+
+
+
+
+
+
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     const ref = await db.collection('users').doc(uid).collection('prescriptions').add({
+
+
+
+
+
+
+
         prescriptionText,
+
+
+
+
+
+
+
         summary:     data.summary,
+
+
+
+
+
+
+
         guardrails:  data.guardrails,
+
+
+
+
+
+
+
         drugNames:   data.drugNames  || [],
+
+
+
+
+
+
+
         hasDuration: data.hasDuration === true,
+
+
+
+
+
+
+
         frequency:   data.frequency  || '',
+
+
+
+
+
+
+
         timestamp:   firebase.firestore.FieldValue.serverTimestamp()
+
+
+
+
+
+
+
     });
+
+
+
+
+
+
+
     return ref.id;
+
+
+
+
+
+
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 async function loadHistory(uid) {
+
+
+
+
+
+
+
     try {
+
+
+
+
+
+
+
         const snap = await db.collection('users').doc(uid).collection('prescriptions')
+
+
+
+
+
+
+
             .orderBy('timestamp', 'desc').limit(20).get();
+
+
+
+
+
+
+
         const items = [];
+
+
+
+
+
+
+
         snap.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
+
+
+
+
+
+
+
         renderHistory(items);
+
+
+
+
+
+
+
     } catch (e) { console.error('loadHistory:', e); }
+
+
+
+
+
+
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 function renderHistory(items) {
+
+
+
+
+
+
+
     const el = document.getElementById('history-list');
+
+
+
+
+
+
+
     if (!items.length) { el.innerHTML = '<p class="panel-empty">No past prescriptions yet.</p>'; return; }
+
+
+
+
+
+
+
     el.innerHTML = items.map(item => {
+
+
+
+
+
+
+
         const chips = (item.drugNames || [])
+
+
+
+
+
+
+
             .map(d => `<span class="drug-chip">${formatDrugName(d)}</span>`).join('') || '<span class="drug-chip">Prescription</span>';
+
+
+
+
+
+
+
         let dateStr = 'Just now';
+
+
+
+
+
+
+
         if (item.timestamp && item.timestamp.toDate) {
+
+
+
+
+
+
+
             dateStr = item.timestamp.toDate().toLocaleString('en-IN', {
+
+
+
+
+
+
+
                 day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+
+
+
+
+
+
+
             });
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
         const s64 = btoa(unescape(encodeURIComponent(item.summary || '')));
+
+
+
+
+
+
+
         const g64 = btoa(unescape(encodeURIComponent(JSON.stringify(item.guardrails || {}))));
+
+
+
+
+
+
+
         return `<div class="hist-item" onclick="openHistItem('${s64}','${g64}')">
+
+
+
+
+
+
+
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+
+
+
+
+
+
+
                 <div class="hist-drugs">${chips}</div>
+
+
+
+
+
+
+
                 <button class="panel-close" style="color: #ef4444; padding: 2px;" onclick="event.stopPropagation(); deleteHistoryItem('${currentUser.uid}', '${item.id}')" title="Delete prescription">
+
+
+
+
+
+
+
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+
+
+
+
+
+
+
                 </button>
+
+
+
+
+
+
+
             </div>
-            <div class="hist-date">🕐 ${dateStr}</div>
+
+
+
+
+
+
+
+            <div class="hist-date">📅 ${dateStr}</div>
+
+
+
+
+
+
+
         </div>`;
+
+
+
+
+
+
+
     }).join('');
+
+
+
+
+
+
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 function openHistItem(s64, g64) {
+
+
+
+
+
+
+
     const summary    = decodeURIComponent(escape(atob(s64)));
+
+
+
+
+
+
+
     const guardrails = JSON.parse(decodeURIComponent(escape(atob(g64))));
+
+
+
+
+
+
+
     displayResults({ summary, guardrails });
+
+
+
+
+
+
+
     document.getElementById('results-section').scrollIntoView({ behavior: 'smooth' });
+
+
+
+
+
+
+
     document.getElementById('history-panel').classList.remove('open');
+
+
+
+
+
+
+
     document.getElementById('history-btn').classList.remove('active');
+
+
+
+
+
+
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 async function deleteHistoryItem(uid, docId) {
+
+
+
+
+
+
+
     if (!confirm('Delete this prescription from your history?')) return;
+
+
+
+
+
+
+
     try {
+
+
+
+
+
+
+
         await db.collection('users').doc(uid).collection('prescriptions').doc(docId).delete();
+
+
+
+
+
+
+
         await loadHistory(uid);
+
+
+
+
+
+
+
         
+
+
+
+
+
+
+
         // Refresh active meds as we may have deleted an active prescription
+
+
+
+
+
+
+
         const meds = await getActiveMedications(uid);
+
+
+
+
+
+
+
         if (meds.length > 0) {
+
+
+
+
+
+
+
             populateActiveMeds(meds);
+
+
+
+
+
+
+
         } else {
+
+
+
+
+
+
+
             document.getElementById('other-meds').value = '';
+
+
+
+
+
+
+
             document.getElementById('active-meds-notice').style.display = 'none';
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
         
+
+
+
+
+
+
+
         showToast('🗑️ Prescription deleted');
+
+
+
+
+
+
+
     } catch (e) {
+
+
+
+
+
+
+
         showToast('Error deleting prescription: ' + e.message);
+
+
+
+
+
+
+
     }
+
+
+
+
+
+
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 async function resetForm() {
+
+
+
+
+
+
+
     document.getElementById('rx-form').reset();
+
+
+
+
+
+
+
     document.getElementById('prescription').value = '';
+
+
+
+
+
+
+
     document.getElementById('other-meds').value = '';
+
+
+
+
+
+
+
     document.getElementById('ocr-msg').style.display = 'none';
+
+
+
+
+
+
+
     document.getElementById('results-section').style.display = 'none';
+
+
+
+
+
+
+
     
+
+
+
+
+
+
+
     // Clear out UI elements
+
+
+
+
+
+
+
     document.getElementById('summary-box').classList.remove('visible');
+
+
+
+
+
+
+
     document.getElementById('risk-banner').style.display = 'none';
+
+
+
+
+
+
+
     document.getElementById('duplicate-alert').style.display = 'none';
+
+
+
+
+
+
+
     const sideEffects = document.getElementById('side-effects-section');
+
+
+
+
+
+
+
     if(sideEffects) { sideEffects.classList.remove('visible'); sideEffects.style.display = 'none'; }
+
+
+
+
+
+
+
     const foodDiv = document.getElementById('food-guidance-section');
+
+
+
+
+
+
+
     if(foodDiv) { foodDiv.classList.remove('visible'); foodDiv.style.display = 'none'; }
+
+
+
+
+
+
+
     const interactions = document.getElementById('interaction-section');
+
+
+
+
+
+
+
     if(interactions) { interactions.classList.remove('visible'); interactions.style.display = 'none'; }
+
+
+
+
+
+
+
     
+
+
+
+
+
+
+
     document.getElementById('active-meds-notice').style.display = 'none';
+
+
+
+
+
+
+
     
+
+
+
+
+
+
+
     // Auto-populate active meds again since we cleared the form
+
+
+
+
+
+
+
     if (currentUser) {
+
+
+
+
+
+
+
         const meds = await getActiveMedications(currentUser.uid);
+
+
+
+
+
+
+
         if (meds.length > 0) populateActiveMeds(meds);
+
+
+
+
+
+
+
     }
+
+
+
+
+
+
+
     
+
+
+
+
+
+
+
     // Scroll to top
+
+
+
+
+
+
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+
+
+
+
+
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // ===== ACTIVE MEDICATIONS =====
+
+
+
+
+
+
+
 async function getActiveMedications(uid) {
+
+
+
+
+
+
+
     try {
+
+
+
+
+
+
+
         const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 90);
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         // Single-field query on timestamp only — no composite index needed.
+
+
+
+
+
+
+
         // hasDuration is filtered client-side to avoid Firestore composite index requirement.
+
+
+
+
+
+
+
         const snap = await db.collection('users').doc(uid).collection('prescriptions')
+
+
+
+
+
+
+
             .where('timestamp', '>=', cutoff)
+
+
+
+
+
+
+
             .orderBy('timestamp', 'desc')
+
+
+
+
+
+
+
             .get();
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         const names = [];
+
+
+
+
+
+
+
         snap.forEach(doc => {
+
+
+
+
+
+
+
             const data = doc.data();
+
+
+
+
+
+
+
             // Only include prescriptions that have no fixed end date (ongoing medications)
+
+
+
+
+
+
+
             if (data.hasDuration !== true) {
+
+
+
+
+
+
+
                 (data.drugNames || []).forEach(n => {
+
+
+
+
+
+
+
                     if (n && !names.includes(n)) names.push(n);
+
+
+
+
+
+
+
                 });
+
+
+
+
+
+
+
             }
+
+
+
+
+
+
+
         });
+
+
+
+
+
+
+
         return names;
+
+
+
+
+
+
+
     } catch (e) {
+
+
+
+
+
+
+
         console.warn('getActiveMedications error:', e.message);
+
+
+
+
+
+
+
         return [];
+
+
+
+
+
+
+
     }
+
+
+
+
+
+
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 function populateActiveMeds(meds) {
+
+
+
+
+
+
+
     if (!meds || meds.length === 0) return;
+
+
+
+
+
+
+
     const textarea = document.getElementById('other-meds');
+
+
+
+
+
+
+
     
+
+
+
+
+
+
+
     // Update value
+
+
+
+
+
+
+
     textarea.value = meds.join(', ');
+
+
+
+
+
+
+
     
+
+
+
+
+
+
+
     // Show banner
+
+
+
+
+
+
+
     document.getElementById('active-meds-notice').style.display = 'flex';
+
+
+
+
+
+
+
     
+
+
+
+
+
+
+
     // Trigger animation
+
+
+
+
+
+
+
     textarea.classList.remove('auto-filled');
+
+
+
+
+
+
+
     void textarea.offsetWidth; // Force reflow
+
+
+
+
+
+
+
     textarea.classList.add('auto-filled');
+
+
+
+
+
+
+
     
+
+
+
+
+
+
+
     // Show toast for explicit feedback
-    showToast('🔄 Active medications auto-filled from history');
+
+
+
+
+
+
+
+    showToast('✨ Active medications auto-filled from history');
+
+
+
+
+
+
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // ===== REMINDER FREQUENCY MAP =====
-// Only scheduled frequencies get reminders. PRN/SOS and unknowns return [] → no reminder.
+
+
+
+
+
+
+
+        // Only scheduled frequencies get reminders. PRN/SOS and unknowns return [] -> no reminder.
+
+
+
+
+
+
+
 function getReminderTimes(freq) {
+
+
+
+
+
+
+
     const map = {
+
+
+
+
+
+
+
         qd: ['09:00'], od: ['09:00'],
+
+
+
+
+
+
+
         qam: ['09:00'], qpm: ['21:00'], qhs: ['21:00'],
-        bid:  ['09:00', '21:00'],
-        tid:  ['08:00', '14:00', '20:00'],
+
+
+
+
+
+
+
+        bid:  ['09:00', '21:00'], bd: ['09:00', '21:00'],
+
+
+
+
+
+
+
+        tid:  ['08:00', '14:00', '20:00'], tds: ['08:00', '14:00', '20:00'],
+
+
+
+
+
+
+
         qid:  ['08:00', '12:00', '16:00', '20:00'],
+
+
+
+
+
+
+
         q12h: ['08:00', '20:00'],
+
+
+
+
+
+
+
         q8h:  ['08:00', '16:00'],
+
+
+
+
+
+
+
         q6h:  ['06:00', '12:00', '18:00'],
+
+
+
+
+
+
+
         q4h:  ['06:00', '10:00', '14:00', '18:00', '22:00'],
+
+
+
+
+
+
+
         qod:  ['09:00']
-        // prn, sos, and unknowns → not in map → return []
+
+
+
+
+
+
+
+        // prn, sos, and unknowns -> not in map -> return []
+
+
+
+
+
+
+
     };
+
+
+
+
+
+
+
     return map[(freq || '').toLowerCase()] || [];
+
+
+
+
+
+
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // ===== NOTIFICATION PERMISSION =====
+
+
+
+
+
+
+
 async function requestNotifPermission() {
+
+
+
+
+
+
+
+    if (isGuest) return;
+
+
+
+
+
+
+
     if ('Notification' in window && Notification.permission === 'default') {
+
+
+
+
+
+
+
         await Notification.requestPermission();
+
+
+
+
+
+
+
     }
+
+
+
+
+
+
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // ===== SAVE REMINDER =====
+
+
+
+
+
+
+
 async function saveReminder(uid, drugName, times, prescriptionId, durationDays) {
+
+
+
+
+
+
+
+    if (isGuest) return;
+
+
+
+
+
+
+
     // Compute endDate only when a fixed duration was prescribed
+
+
+
+
+
+
+
     let endDate = null;
+
+
+
+
+
+
+
     if (durationDays > 0) {
+
+
+
+
+
+
+
         const d = new Date();
+
+
+
+
+
+
+
         d.setDate(d.getDate() + durationDays);
+
+
+
+
+
+
+
         endDate = firebase.firestore.Timestamp.fromDate(d);
+
+
+
+
+
+
+
     }
+
+
+
+
+
+
+
     const ref = await db.collection('users').doc(uid).collection('reminders').add({
+
+
+
+
+
+
+
         drugName, times, active: true,
+
+
+
+
+
+
+
         prescriptionId,
+
+
+
+
+
+
+
         durationDays: durationDays || 0,
+
+
+
+
+
+
+
         endDate,
+
+
+
+
+
+
+
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
+
+
+
+
+
+
+
     });
+
+
+
+
+
+
+
     return { id: ref.id, endDate };
+
+
+
+
+
+
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // ===== LOAD + SCHEDULE =====
+
+
+
+
+
+
+
+function getLocalDateString(d) {
+
+
+
+
+
+
+
+    const date = new Date(d);
+
+
+
+
+
+
+
+    date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+
+
+
+
+
+
+
+    return date.toISOString().split('T')[0];
+
+
+
+
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function formatAmPm(timeStr) {
+
+
+
+
+
+
+
+    const [h, m] = timeStr.split(':').map(Number);
+
+
+
+
+
+
+
+    const ampm = h >= 12 ? 'PM' : 'AM';
+
+
+
+
+
+
+
+    const h12 = h % 12 || 12;
+
+
+
+
+
+
+
+    return `${h12.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} ${ampm}`;
+
+
+
+
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 async function loadAndScheduleReminders(uid) {
+
+
+
+
+
+
+
+    if (isGuest) return;
+
+
+
+
+
+
+
     try {
-        const snap = await db.collection('users').doc(uid).collection('reminders')
-            .where('active', '==', true).get();
-        activeReminders = [];
-        snap.forEach(doc => activeReminders.push({ id: doc.id, ...doc.data() }));
-        await expireStaleReminders(uid);  // silently cancel expired ones
+
+
+
+
+
+
+
+        const snap = await db.collection('users').doc(uid).collection('reminders').get();
+
+
+
+
+
+
+
+        allRemindersHistory = [];
+
+
+
+
+
+
+
+        snap.forEach(doc => allRemindersHistory.push({ id: doc.id, ...doc.data() }));
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+        activeReminders = allRemindersHistory.filter(r => r.active);
+
+
+
+
+
+
+
+        await expireStaleReminders(uid);
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
         scheduleReminders(activeReminders);
-        renderReminders(activeReminders);
+
+
+
+
+
+
+
+        await loadDoseHistory(uid);
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+        renderReminders();
+
+
+
+
+
+
+
+        renderCalendar();
+
+
+
+
+
+
+
+        calculateStreak();
+
+
+
+
+
+
+
         updateBadge();
+
+
+
+
+
+
+
     } catch (e) { console.error('loadReminders:', e); }
+
+
+
+
+
+
+
 }
 
-// Expire any reminder whose endDate has passed
-async function expireStaleReminders(uid) {
-    const now  = new Date();
-    const stale = activeReminders.filter(r => {
-        if (!r.endDate) return false;
-        const end = r.endDate.toDate ? r.endDate.toDate() : new Date(r.endDate);
-        return now > end;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+async function loadDoseHistory(uid) {
+
+
+
+
+
+
+
+    doseHistory = {};
+
+
+
+
+
+
+
+    const thirtyDaysAgo = new Date();
+
+
+
+
+
+
+
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+    const snap = await db.collection('users').doc(uid).collection('doses')
+
+
+
+
+
+
+
+        .where('date', '>=', getLocalDateString(thirtyDaysAgo))
+
+
+
+
+
+
+
+        .get();
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+    snap.forEach(doc => {
+
+
+
+
+
+
+
+        const data = doc.data();
+
+
+
+
+
+
+
+        if (!doseHistory[data.date]) doseHistory[data.date] = {};
+
+
+
+
+
+
+
+        doseHistory[data.date][`${data.reminderId}_${data.scheduledTime}`] = data;
+
+
+
+
+
+
+
     });
-    for (const r of stale) {
-        await db.collection('users').doc(uid).collection('reminders').doc(r.id).update({ active: false });
-    }
-    activeReminders = activeReminders.filter(r => !stale.find(s => s.id === r.id));
+
+
+
+
+
+
+
 }
 
-// Schedule browser timeouts for each active reminder
-function scheduleReminders(reminders) {
-    reminderTimeouts.forEach(clearTimeout);
-    reminderTimeouts = [];
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+async function expireStaleReminders(uid) {
+
+
+
+
+
+
 
     const now = new Date();
+
+
+
+
+
+
+
+    const stale = activeReminders.filter(r => {
+
+
+
+
+
+
+
+        if (!r.endDate) return false;
+
+
+
+
+
+
+
+        const end = r.endDate.toDate ? r.endDate.toDate() : new Date(r.endDate);
+
+
+
+
+
+
+
+        return now > end;
+
+
+
+
+
+
+
+    });
+
+
+
+
+
+
+
+    for (const r of stale) {
+
+
+
+
+
+
+
+        await db.collection('users').doc(uid).collection('reminders').doc(r.id).update({ active: false });
+
+
+
+
+
+
+
+        r.active = false;
+
+
+
+
+
+
+
+    }
+
+
+
+
+
+
+
+    activeReminders = activeReminders.filter(r => r.active);
+
+
+
+
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function scheduleReminders(reminders) {
+
+
+
+
+
+
+
+    Object.values(reminderTimeouts).forEach(clearTimeout);
+
+
+
+
+
+
+
+    reminderTimeouts = {};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    const now = new Date();
+
+
+
+
+
+
+
     reminders.filter(r => r.active).forEach(rem => {
+
+
+
+
+
+
+
         if (!rem.times || !rem.times.length) return;
 
-        // Determine end boundary
-        const endDate = rem.endDate
-            ? (rem.endDate.toDate ? rem.endDate.toDate() : new Date(rem.endDate))
-            : null;
 
-        // If already past end date, skip (expireStaleReminders should have handled it but safety check)
+
+
+
+
+
+        const endDate = rem.endDate ? (rem.endDate.toDate ? rem.endDate.toDate() : new Date(rem.endDate)) : null;
+
+
+
+
+
+
+
         if (endDate && now > endDate) return;
 
-        rem.times.forEach(time => {
-            const [h, m] = time.split(':').map(Number);
-            const next   = new Date();
-            next.setHours(h, m, 0, 0);
-            if (next <= now) next.setDate(next.getDate() + 1);  // push to tomorrow if time passed today
 
-            // Don't schedule past the end date
+
+
+
+
+
+
+
+
+
+
+
+
+
+        rem.times.forEach(time => {
+
+
+
+
+
+
+
+            const [h, m] = time.split(':').map(Number);
+
+
+
+
+
+
+
+            const next = new Date();
+
+
+
+
+
+
+
+            next.setHours(h, m, 0, 0);
+
+
+
+
+
+
+
+            if (next <= now) next.setDate(next.getDate() + 1);
+
+
+
+
+
+
+
             if (endDate && next > endDate) return;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
             const delay = next.getTime() - now.getTime();
-            const tid   = setTimeout(async () => {
-                // Before firing, check if still within duration
+
+
+
+
+
+
+
+            const doseKey = `${rem.id}_${time}`;
+
+
+
+
+
+
+
+            
+
+
+
+
+
+
+
+            const tid = setTimeout(async () => {
+
+
+
+
+
+
+
                 const fireNow = new Date();
+
+
+
+
+
+
+
                 if (!endDate || fireNow <= endDate) {
+
+
+
+
+
+
+
                     fireReminder(rem.drugName);
-                    scheduleReminders([rem]);    // reschedule for next day
+
+
+
+
+
+
+
+                    scheduleReminders(activeReminders);
+
+
+
+
+
+
+
                 } else if (currentUser) {
-                    // Past end date — auto-cancel silently
+
+
+
+
+
+
+
                     await cancelReminder(currentUser.uid, rem.id, true);
+
+
+
+
+
+
+
                 }
+
+
+
+
+
+
+
             }, delay);
-            reminderTimeouts.push(tid);
+
+
+
+
+
+
+
+            reminderTimeouts[doseKey] = tid;
+
+
+
+
+
+
+
         });
+
+
+
+
+
+
+
     });
+
+
+
+
+
+
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 function fireReminder(drugName) {
+
+
+
+
+
+
+
     if ('Notification' in window && Notification.permission === 'granted') {
+
+
+
+
+
+
+
         new Notification('💊 RxPlain Reminder', { body: `Time to take your ${drugName}` });
+
+
+
+
+
+
+
     }
+
+
+
+
+
+
+
     showToast(`⏰ Time to take your ${drugName}`);
+
+
+
+
+
+
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 async function cancelReminder(uid, remId, silent = false) {
+
     try {
+
         await db.collection('users').doc(uid).collection('reminders').doc(remId).update({ active: false });
+
         activeReminders = activeReminders.filter(r => r.id !== remId);
+
+        const rHist = allRemindersHistory.find(r => r.id === remId);
+
+        if (rHist) rHist.active = false;
+
+        
+
         scheduleReminders(activeReminders);
-        renderReminders(activeReminders);
+
+        renderReminders();
+
+        renderCalendar();
+
+        calculateStreak();
+
         updateBadge();
-        if (!silent) showToast('🗑️ Reminder cancelled');
-    } catch (e) { if (!silent) showToast('Error: ' + e.message); }
+
+        
+
+        if (!silent) showToast('🔕 Reminder cancelled');
+
+    } catch (e) {
+
+        if (!silent) showToast('Error: ' + e.message);
+
+    }
+
 }
 
-// ===== AUTO-SET REMINDERS (called after translate) =====
+
+
+// ===== NEW PANEL LOGIC =====
+
+
+
+function renderReminders() {
+
+    const el = document.getElementById('notif-list');
+
+    if (isGuest) { el.innerHTML = '<p class="panel-empty">Sign in to use reminders.</p>'; return; }
+
+    if (!activeReminders.length) { el.innerHTML = '<p class="panel-empty">No active reminders for today.</p>'; return; }
+
+
+
+    const todayStr = getLocalDateString(new Date());
+
+    const grouped  = {};
+
+    activeReminders.forEach(rem => {
+
+        rem.times.forEach(time => {
+
+            if (!grouped[time]) grouped[time] = [];
+
+            grouped[time].push(rem);
+
+        });
+
+    });
+
+
+
+    const sortedTimes = Object.keys(grouped).sort();
+
+    if (!sortedTimes.length) { el.innerHTML = '<p class="panel-empty">No active reminders for today.</p>'; return; }
+
+
+
+    let html = '';
+
+    sortedTimes.forEach(time => {
+
+        html += `<div class="dose-group"><div class="dose-time">${formatAmPm(time)}</div>`;
+
+        grouped[time].forEach(rem => {
+
+            const doseKey = `${rem.id}_${time}`;
+
+            const isTaken = doseHistory[todayStr] && doseHistory[todayStr][doseKey];
+
+            html += `<div class="dose-item">
+
+                <div style="flex:1;">
+
+                    <strong style="color:var(--primary);">${formatDrugName(rem.drugName)}</strong>
+
+                    <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.2rem;">Daily at ${formatAmPm(time)}</div>
+
+                </div>
+
+                <div style="display:flex;gap:0.4rem;align-items:center;flex-shrink:0;">
+
+                    <button class="btn-taken" ${isTaken ? 'disabled' : ''}
+
+                        title="${isTaken ? 'Already taken' : 'Mark as taken'}"
+
+                        onclick="markDoseTaken('${rem.id}','${rem.drugName}','${time}')">
+
+                        ${isTaken ? '✓' : '○'}
+
+                    </button>
+
+                    <button class="cancel-btn" title="Cancel this reminder"
+
+                        onclick="cancelReminder('${currentUser ? currentUser.uid : ''}','${rem.id}')">✕</button>
+
+                </div>
+
+            </div>`;
+
+        });
+
+        html += `</div>`;
+
+    });
+
+    el.innerHTML = html;
+
+}
+
+
+
+async function markDoseTaken(remId, drugName, time) {
+
+    if (isGuest || !currentUser) return;
+
+    const todayStr = getLocalDateString(new Date());
+
+    const doseKey  = `${remId}_${time}`;
+
+    const docId    = `${todayStr}_${doseKey}`;
+
+    try {
+
+        const data = { date: todayStr, reminderId: remId, drugName, scheduledTime: time, taken: true,
+
+            takenAt: firebase.firestore.FieldValue.serverTimestamp() };
+
+        await db.collection('users').doc(currentUser.uid).collection('doses').doc(docId).set(data);
+
+        if (!doseHistory[todayStr]) doseHistory[todayStr] = {};
+
+        doseHistory[todayStr][doseKey] = data;
+
+        if (reminderTimeouts[doseKey]) { clearTimeout(reminderTimeouts[doseKey]); delete reminderTimeouts[doseKey]; }
+
+        renderReminders(); renderCalendar(); calculateStreak();
+
+        showToast('✅ ' + formatDrugName(drugName) + ' marked as taken');
+
+    } catch (e) { showToast('❌ Error: ' + e.message); }
+
+}
+
+
+
+function getExpectedDosesForDate(dateStr) {
+
+    const d = new Date(dateStr);
+
+    let expected = 0;
+
+    allRemindersHistory.forEach(rem => {
+
+        const created = rem.createdAt ? (rem.createdAt.toDate ? rem.createdAt.toDate() : new Date(rem.createdAt)) : new Date(0);
+
+        created.setHours(0,0,0,0);
+
+        const end = rem.endDate ? (rem.endDate.toDate ? rem.endDate.toDate() : new Date(rem.endDate)) : new Date(8640000000000000);
+
+        end.setHours(23,59,59,999);
+
+        if (d >= created && d <= end && (rem.active || (rem.endDate && d <= end)))
+
+            expected += (rem.times ? rem.times.length : 0);
+
+    });
+
+    return expected;
+
+}
+
+
+
+function calculateStreak() {
+
+    if (isGuest) return;
+
+    let streak = 0;
+
+    const today = new Date();
+
+    for (let i = 0; i < 30; i++) {
+
+        const d = new Date(today); d.setDate(d.getDate() - i);
+
+        const dateStr       = getLocalDateString(d);
+
+        const expectedCount = getExpectedDosesForDate(dateStr);
+
+        const takenDoses    = doseHistory[dateStr] ? Object.keys(doseHistory[dateStr]).length : 0;
+
+        if (expectedCount === 0) continue;
+
+        if (i === 0) { if (takenDoses >= expectedCount) streak++; }
+
+        else { if (takenDoses >= expectedCount) streak++; else break; }
+
+    }
+
+    const hdr = document.getElementById('streak-header');
+
+    if(hdr) {
+
+        hdr.innerHTML = streak === 30 ? '🔥 30+ day streak!'
+
+            : streak > 0 ? '🔥 ' + streak + ' day streak'
+
+            : 'Start your streak today!';
+
+    }
+
+}
+
+
+
+function changeWeek(delta) { currentWeekOffset += delta; renderCalendar(); }
+
+
+
+function renderCalendar() {
+
+    const el = document.getElementById('weekly-calendar');
+
+    if (isGuest) { if(el) el.innerHTML = ''; return; }
+
+    const today = new Date(); today.setHours(0,0,0,0);
+
+    const cv = new Date(today); cv.setDate(cv.getDate() + currentWeekOffset * 7);
+
+    const day = cv.getDay();
+
+    const monday = new Date(cv.setDate(cv.getDate() - day + (day === 0 ? -6 : 1)));
+
+    const dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+    let html = '';
+
+    for (let i = 0; i < 7; i++) {
+
+        const d = new Date(monday); d.setDate(d.getDate() + i);
+
+        const dateStr       = getLocalDateString(d);
+
+        const expectedCount = getExpectedDosesForDate(dateStr);
+
+        const takenDoses    = doseHistory[dateStr] ? Object.keys(doseHistory[dateStr]).length : 0;
+
+        let sc = '';
+
+        if (expectedCount > 0 && d <= today) {
+
+            sc = takenDoses >= expectedCount ? 'green' : d < today ? 'red' : takenDoses > 0 ? 'amber' : '';
+
+        }
+
+        const it = d.getTime() === today.getTime() ? 'today' : '';
+
+        html += `<div class="cal-tile ${sc} ${it}"><div style="font-weight:600;font-size:0.75rem;">${dayNames[i]}</div><div style="font-size:1.1rem;">${d.getDate()}</div></div>`;
+
+    }
+
+    if (el) el.innerHTML = html;
+
+    const lbl = document.getElementById('cal-week-label');
+
+    if (lbl) lbl.textContent = currentWeekOffset === 0 ? 'This Week'
+
+        : currentWeekOffset === -1 ? 'Last Week'
+
+        : currentWeekOffset === 1 ? 'Next Week'
+
+        : 'Week ' + (currentWeekOffset > 0 ? '+' : '') + currentWeekOffset;
+
+}
+
+
+
+function formatEndDate(rem) {
+
+    if (!rem.endDate) return null;
+
+    const d = rem.endDate.toDate ? rem.endDate.toDate() : new Date(rem.endDate);
+
+    return d.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+
+}
+
+
+
 async function autoSetReminders(uid, data, prescriptionId) {
-    const drugNames      = data.drugNames      || [];
-    const freqByDrug     = data.frequencyByDrug || {};
-    const durByDrug      = data.durationByDrug  || {};
+
+    const drugNames  = data.drugNames      || [];
+
+    const freqByDrug = data.frequencyByDrug || {};
+
+    const durByDrug  = data.durationByDrug  || {};
 
     const set = [];
+
     for (const drugName of drugNames) {
-        const freq  = freqByDrug[drugName] || data.frequency || '';
+
+        const freq = freqByDrug[drugName] || data.frequency || '';
+
         const times = getReminderTimes(freq);
 
-        // Skip PRN, SOS, or unrecognised frequency (discretionary medications)
-        if (times.length === 0) continue;
+        if (!times.length) continue;
 
         const durationDays = durByDrug[drugName] || 0;
+
         const { id: remId, endDate } = await saveReminder(uid, drugName, times, prescriptionId, durationDays);
 
-        activeReminders.push({ id: remId, drugName, times, active: true, durationDays, endDate });
+        const entry = { id: remId, drugName, times, active: true, durationDays, endDate, createdAt: new Date() };
+
+        activeReminders.push(entry);
+
+        allRemindersHistory.push(entry);
+
         set.push(drugName);
+
     }
 
     if (set.length > 0) {
+
         scheduleReminders(activeReminders);
-        renderReminders(activeReminders);
+
+        renderReminders();
+
         updateBadge();
-        showToast(`⏰ Reminders set for: ${set.join(', ')}`);
+
+        showToast('⏰ Reminders set for: ' + set.join(', '));
+
     }
+
 }
 
-// ===== RENDER REMINDERS PANEL =====
-function formatEndDate(rem) {
-    if (!rem.endDate) return null;
-    const d = rem.endDate.toDate ? rem.endDate.toDate() : new Date(rem.endDate);
-    return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
-}
 
-function renderReminders(reminders) {
-    const el     = document.getElementById('notif-list');
-    const active = reminders.filter(r => r.active);
-    if (!active.length) {
-        el.innerHTML = '<p class="panel-empty">No active reminders.<br>They are set automatically when you translate a scheduled prescription.</p>';
-        return;
-    }
-    el.innerHTML = active.map(r => {
-        const end     = formatEndDate(r);
-        const expHtml = end
-            ? `<div class="notif-expiry expiring">📅 Until: ${end}</div>`
-            : `<div class="notif-expiry ongoing">🔄 Ongoing</div>`;
-        return `
-        <div class="notif-item">
-            <div class="notif-drug">💊 ${r.drugName}</div>
-            <div class="notif-times">⏰ Daily at: ${(r.times||[]).join(', ')}</div>
-            ${expHtml}
-            <button class="cancel-btn" onclick="cancelReminder('${currentUser.uid}','${r.id}')">Cancel</button>
-        </div>`;
-    }).join('');
-}
 
 function updateBadge() {
+
     const count = activeReminders.filter(r => r.active).length;
+
     const badge = document.getElementById('notif-badge');
-    if (count > 0) { badge.textContent = count; badge.classList.add('show'); }
-    else badge.classList.remove('show');
+
+    if(badge) {
+
+        if (count > 0) { badge.textContent = count; badge.classList.add('show'); }
+
+        else badge.classList.remove('show');
+
+    }
+
 }
+
+
 
 // ===== TOAST =====
+
 let toastTimer = null;
+
 function showToast(msg) {
+
     const el = document.getElementById('rx-toast');
+
+    if (!el) return;
+
     el.textContent = msg; el.classList.add('show');
+
     if (toastTimer) clearTimeout(toastTimer);
+
     toastTimer = setTimeout(() => el.classList.remove('show'), 4500);
+
 }
 
+
+
 // ===== OCR =====
+
+
+
+
+
+
+
+
+
 document.getElementById('prescription-image').addEventListener('change', async e => {
+
+
+
+
+
+
+
     const file = e.target.files[0]; if (!file) return;
+
+
+
+
+
+
+
     const reader = new FileReader();
+
+
+
+
+
+
+
     reader.onload = async evt => {
+
+
+
+
+
+
+
         const b64 = evt.target.result.split(',')[1];
+
+
+
+
+
+
+
         document.getElementById('submit-btn').style.display      = 'none';
+
+
+
+
+
+
+
         document.getElementById('loading-spinner').style.display = 'block';
+
+
+
+
+
+
+
         document.getElementById('ocr-msg').style.display         = 'none';
+
+
+
+
+
+
+
         try {
+
+
+
+
+
+
+
             const res  = await fetch('/api/ocr', {
+
+
+
+
+
+
+
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
+
+
+
+
+
+
+
                 body: JSON.stringify({ image: b64 })
+
+
+
+
+
+
+
             });
+
+
+
+
+
+
+
             const data = await res.json();
+
+
+
+
+
+
+
             if (data.error) { showToast('OCR Error: ' + data.error); }
+
+
+
+
+
+
+
             else {
+
+
+
+
+
+
+
                 document.getElementById('prescription').value = data.extracted_text;
+
+
+
+
+
+
+
                 document.getElementById('ocr-msg').style.display = 'block';
+
+
+
+
+
+
+
             }
+
+
+
+
+
+
+
         } catch (err) { showToast('OCR error: ' + err.message); }
+
+
+
+
+
+
+
         finally {
+
+
+
+
+
+
+
             document.getElementById('submit-btn').style.display      = 'block';
+
+
+
+
+
+
+
             document.getElementById('loading-spinner').style.display = 'none';
+
+
+
+
+
+
+
             e.target.value = '';
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
     };
+
+
+
+
+
+
+
     reader.readAsDataURL(file);
+
+
+
+
+
+
+
 });
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // ===== TRANSLATE =====
+
+
+
+
+
+
+
 document.getElementById('rx-form').addEventListener('submit', async e => {
+
+
+
+
+
+
+
     e.preventDefault();
+
+
+
+
+
+
+
     const prescription    = document.getElementById('prescription').value.trim();
+
+
+
+
+
+
+
     let   otherMedsRaw    = document.getElementById('other-meds').value.trim();
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     document.getElementById('submit-btn').style.display      = 'none';
+
+
+
+
+
+
+
     document.getElementById('loading-spinner').style.display = 'block';
+
+
+
+
+
+
+
     document.getElementById('results-section').style.display = 'none';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     let mergedOtherMeds = otherMedsRaw;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     try {
+
+
+
+
+
+
+
         const res  = await fetch('/api/translate', {
+
+
+
+
+
+
+
             method: 'POST', headers: { 'Content-Type': 'application/json' },
+
+
+
+
+
+
+
             body: JSON.stringify({ prescription, other_meds: mergedOtherMeds })
+
+
+
+
+
+
+
         });
+
+
+
+
+
+
+
         const data = await res.json();
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         if (data.success === false) { showToast(data.message || 'Drug not recognised.'); }
+
+
+
+
+
+
+
         else if (data.error)        { showToast('Error: ' + data.error); }
+
+
+
+
+
+
+
         else {
+
+
+
+
+
+
+
             displayResults(data);
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
             if (currentUser) {
+
+
+
+
+
+
+
                 // 1. Save to history
+
+
+
+
+
+
+
                 const prescriptionId = await saveTranslation(currentUser.uid, prescription, data);
+
+
+
+
+
+
+
                 await loadHistory(currentUser.uid);
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                 // 2. Auto-set reminders (skips PRN/SOS automatically)
+
+
+
+
+
+
+
                 await autoSetReminders(currentUser.uid, data, prescriptionId);
+
+
+
+
+
+
+
             }
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
     } catch (err) { showToast('Connection error: ' + err.message); }
+
+
+
+
+
+
+
     finally {
+
+
+
+
+
+
+
         document.getElementById('submit-btn').style.display      = 'block';
+
+
+
+
+
+
+
         document.getElementById('loading-spinner').style.display = 'none';
+
+
+
+
+
+
+
     }
+
+
+
+
+
+
+
 });
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // ===== TAB SWITCHING =====
+
+
+
+
+
+
+
 function switchTab(tabId) {
+
+
+
+
+
+
+
     // Hide all tabs
+
+
+
+
+
+
+
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+
+
+
+
+
+
+
     // Deactivate all icons
+
+
+
+
+
+
+
     document.querySelectorAll('.icon-btn').forEach(el => el.classList.remove('active'));
+
+
+
+
+
+
+
     
+
+
+
+
+
+
+
     // Show active tab
+
+
+
+
+
+
+
     const tab = document.getElementById(tabId);
+
+
+
+
+
+
+
     if (tab) tab.classList.add('active');
+
+
+
+
+
+
+
     
+
+
+
+
+
+
+
     // Highlight active icon
+
+
+
+
+
+
+
     const btn = document.getElementById('btn-' + tabId);
+
+
+
+
+
+
+
     if (btn) btn.classList.add('active');
+
+
+
+
+
+
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 function toggleInteraction(btn) {
+
+
+
+
+
+
+
     const detail = btn.nextElementSibling;
+
+
+
+
+
+
+
     if (detail.style.display === 'block') {
+
+
+
+
+
+
+
         detail.style.display = 'none';
+
+
+
+
+
+
+
         btn.textContent = 'Read More';
+
+
+
+
+
+
+
     } else {
+
+
+
+
+
+
+
         detail.style.display = 'block';
+
+
+
+
+
+
+
         btn.textContent = 'Hide';
+
+
+
+
+
+
+
     }
+
+
+
+
+
+
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // ===== PARSING & FORMATTING UTILS =====
+
+
+
+
+
+
+
 function toTitleCase(str) {
+
+
+
+
+
+
+
     if (!str) return "";
+
+
+
+
+
+
+
     return str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+
+
+
+
+
+
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 function formatDrugName(name) {
+
+
+
+
+
+
+
     if (!name) return "";
+
+
+
+
+
+
+
     let formatted = toTitleCase(name);
+
+
+
+
+
+
+
     // Lowercase dosage units: mg, ml, mcg, g, u, iu, supporting optional decimal numbers
+
+
+
+
+
+
+
     formatted = formatted.replace(/\b(\d*(?:\.\d+)?\s*(?:mg|ml|mcg|g|iu|u))\b/gi, m => m.toLowerCase());
+
+
+
+
+
+
+
     return formatted;
+
+
+
+
+
+
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 function getDisplayName(name, medications) {
+
+
+
+
+
+
+
     if (!name) return "";
+
+
+
+
+
+
+
     const nameLower = name.toLowerCase();
+
+
+
+
+
+
+
     const found = medications.find(m => 
+
+
+
+
+
+
+
         (m.generic_name && m.generic_name.toLowerCase() === nameLower) || 
+
+
+
+
+
+
+
         (m.drug_name && m.drug_name.toLowerCase() === nameLower)
+
+
+
+
+
+
+
     );
+
+
+
+
+
+
+
     if (found) return found.display_name || found.drug_name;
+
+
+
+
+
+
+
     return name;
+
+
+
+
+
+
+
 }
 
-function parseSideEffects(text, type) {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function parseSideEffects(text, type, drugName = '') {
     if (!text) return [];
     
-    let items = [];
-    if (type === 'common') {
-        const match = text.match(/(?:most common adverse reactions|most frequently reported|adverse reactions include)(?:[^:]*:)?(.*?)(?:\.|$)/i);
+    if (type === 'serious') {
+        let items = [];
+        let match = text.match(/WARNING:(.*?)(?:\.|\n|$)/i);
         if (match && match[1]) {
-            items = match[1].split(',').map(s => s.trim().replace(/^(and|or)\s+/i, '')).filter(Boolean);
+            text = match[1];
         } else {
-            // Fallback: extract first sentence
-            const firstSent = text.split('.')[0] + '.';
-            items = [firstSent.length > 150 ? firstSent.substring(0, 147) + '...' : firstSent];
+            match = text.match(/(?:risk of|cases of|reports of|fatalities associated with|warning:|warnings:)(.*?)(?:\.|\n|$)/i);
+            if (match && match[1]) {
+                text = match[1];
+            } else {
+                text = text.split('.')[0];
+            }
         }
-    } else if (type === 'serious') {
-        const match = text.match(/(?:risk of|cases of|reports of|fatalities associated with|warning:|warnings:)(.*?)(?:\.|$)/i);
-        if (match && match[1]) {
-            items = match[1].split(',').map(s => s.trim().replace(/^(and|or)\s+/i, '')).filter(Boolean);
-        } else {
-            // Fallback: extract first sentence
-            const firstSent = text.split('.')[0] + '.';
-            items = [firstSent.length > 150 ? firstSent.substring(0, 147) + '...' : firstSent];
+        
+        text = text.replace(/\[see[^\]]*\]/gi, '');
+        text = text.replace(/\(\s*\d+(?:\.\d+)?\s*\)/g, '');
+        text = text.replace(/^(and|or)\s+/i, '').trim().replace(/\s+/g, ' ');
+        
+        if (drugName) {
+            const safeName = drugName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const prefixRegex = new RegExp('^(?:[A-Z\\s]+)?' + safeName + '\\s+(?:sodium\\s+|hydrochloride\\s+|sulfate\\s+)?(?:can|may)?\\s*cause\\s+', 'i');
+            if (prefixRegex.test(text)) {
+                text = text.replace(prefixRegex, 'Risk of ');
+            }
         }
+        
+        if (text.length > 80) {
+            text = text.substring(0, 80).replace(/\s+\S*$/, '') + '...';
+        }
+        
+        text = text.trim();
+        if (text) items.push(text);
+        return items;
     }
     
-    // Max 5 items
+    let items = [];
+    const match = text.match(/(?:most common adverse reactions|most frequently reported|adverse reactions include)(?:[^:]*:)?(.*?)(?:\.|\n|$)/i);
+    if (match && match[1]) {
+        items = match[1].split(',').map(s => s.trim().replace(/^(and|or)\s+/i, '')).filter(Boolean);
+    } else {
+        const firstSent = text.split('.')[0] + '.';
+        items = [firstSent.length > 150 ? firstSent.substring(0, 147) + '...' : firstSent];
+    }
+    
     if (items.length > 5) {
         items = items.slice(0, 5);
-        items.push("...and potentially others.");
+        items.push('...and potentially others.');
     }
     return items;
 }
 
 // ===== DISPLAY RESULTS =====
+
 function displayResults(data) {
+
+
+
+
+
+
+
     document.getElementById('results-section').style.display = 'block';
+
+
+
+
+
+
+
     const container = document.getElementById('cards-container');
+
+
+
+
+
+
+
     
+
+
+
+
+
+
+
     // Instructions (Default Tab)
+
+
+
+
+
+
+
     let instHtml = `<ul class="instructions-list">`;
+
+
+
+
+
+
+
     if (data.medications && data.medications.length > 0) {
+
+
+
+
+
+
+
         data.medications.forEach((m, i) => {
-            let sched = "";
-            if (m.mealSchedule) {
-                let rawSched = m.mealSchedule;
-                rawSched = rawSched.replace(/^Take [^ ]+ /, '');
-                sched = rawSched.charAt(0).toLowerCase() + rawSched.slice(1);
-                if (sched.endsWith('.')) sched = sched.slice(0, -1);
-            } else {
-                sched = (m.frequency_raw || 'as directed');
+
+
+
+
+
+
+
+            let dose = m.drug_dose ? ` ${m.drug_dose}` : "";
+            
+            let freq = m.frequency || m.frequency_raw || "";
+            let route = m.route || "";
+            let duration = m.duration || (m.duration_days ? `${m.duration_days} days` : "");
+            
+            let parts = [];
+            if (freq) parts.push(freq);
+            if (route) parts.push(route);
+            if (duration) parts.push(duration);
+            
+            let schedInfo = parts.join(", ");
+            if (schedInfo) {
+                schedInfo = " — " + schedInfo;
             }
             
-            let dur = "";
-            if (m.duration_days) {
-                dur = `, ${m.duration_days} days`;
-            } else if (m.duration) {
-                dur = `, ${m.duration}`;
-            }
-            
-            // Sentence Case for frequency/timing text
-            sched = sched.charAt(0).toUpperCase() + sched.slice(1);
-            
-            // Format number exactly "1. " and apply Title Case to drug name
-            let line = `${i+1}. ${formatDrugName(m.display_name || m.drug_name)} — ${sched}${dur}`;
+            let line = `${i+1}. ${formatDrugName(m.display_name || m.drug_name)}${dose}${schedInfo}`;
             if (!line.endsWith('.')) line += '.';
+
+
+
+
+
+
+
             
+
+
+
+
+
+
+
             instHtml += `<li>${line}</li>`;
+
+
+
+
+
+
+
         });
+
+
+
+
+
+
+
     } else {
+
+
+
+
+
+
+
         instHtml += `<li>No clear instructions found.</li>`;
+
+
+
+
+
+
+
     }
+
+
+
+
+
+
+
     instHtml += `</ul>`;
+
+
+
+
+
+
+
     
+
+
+
+
+
+
+
     // Interactions Tab
+
+
+
+
+
+
+
     let intHtml = `<h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--primary);">Severe Drug Interactions</h3>`;
+
+
+
+
+
+
+
     let intCount = 0;
+
+
+
+
+
+
+
     if (data.interactionsList && data.interactionsList.length > 0) {
+
+
+
+
+
+
+
         intCount = data.interactionsList.length;
+
+
+
+
+
+
+
         data.interactionsList.forEach(int => {
+
+
+
+
+
+
+
             let textToParse = (int.excerpt || int.description || "").trim();
+
+
+
+
+
+
+
             let firstSentence = textToParse;
+
+
+
+
+
+
+
             if (firstSentence) {
+
+
+
+
+
+
+
                 // Ensure first letter capitalized
+
+
+
+
+
+
+
                 firstSentence = firstSentence.charAt(0).toUpperCase() + firstSentence.slice(1);
+
+
+
+
+
+
+
             } else {
+
+
+
+
+
+
+
                 firstSentence = "Interaction details unavailable.";
+
+
+
+
+
+
+
             }
+
+
+
+
+
+
+
             
+
+
+
+
+
+
+
             const displaySource = formatDrugName(int.source_drug);
+
+
+
+
+
+
+
             const displayMed = formatDrugName(int.medication);
+
+
+
+
+
+
+
             
+
+
+
+
+
+
+
             intHtml += `
+
+
+
+
+
+
+
             <div class="interaction-item">
+
+
+
+
+
+
+
                 <div class="interaction-text"><strong>${displaySource}</strong> may interact with <strong>${displayMed}</strong>.</div>
+
+
+
+
+
+
+
                 <button class="btn-secondary" style="margin: 0; padding: 0.2rem 0.5rem; font-size: 0.8rem;" onclick="toggleInteraction(this)">Read More</button>
+
+
+
+
+
+
+
                 <div class="interaction-detail">${firstSentence}</div>
+
+
+
+
+
+
+
             </div>`;
+
+
+
+
+
+
+
         });
+
+
+
+
+
+
+
     } else {
+
+
+
+
+
+
+
         intHtml += `<p style="color: var(--text-muted); margin: 0;">No severe drug interactions detected.</p>`;
+
+
+
+
+
+
+
     }
+
+
+
+
+
+
+
     
+
+
+
+
+
+
+
     // Side Effects Tab
+
+
+
+
+
+
+
     let seHtml = `<h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--primary);">Safety Warnings</h3>`;
+
+
+
+
+
+
+
     let hasSerious = false;
+
+
+
+
+
+
+
     if (data.sideEffects && data.sideEffects.length > 0) {
+
+
+
+
+
+
+
         data.sideEffects.forEach(se => {
+
+
+
+
+
+
+
             const rawCommons = parseSideEffects(se.common, 'common');
-            const rawSerious = parseSideEffects(se.serious, 'serious');
+
+
+
+
+
+
+
+            const rawSerious = parseSideEffects(se.serious, 'serious', se.drugName);
+
+
+
+
+
+
+
             
+
+
+
+
+
+
+
             const commons = rawCommons.map(c => {
+
+
+
+
+
+
+
                 let s = c.charAt(0).toUpperCase() + c.slice(1);
+
+
+
+
+
+
+
                 if (!s.endsWith('.')) s += '.';
+
+
+
+
+
+
+
                 return s;
+
+
+
+
+
+
+
             });
+
+
+
+
+
+
+
             
+
+
+
+
+
+
+
             const serious = rawSerious.map(c => {
+
+
+
+
+
+
+
                 let s = c.charAt(0).toUpperCase() + c.slice(1);
+
+
+
+
+
+
+
                 if (!s.endsWith('.')) s += '.';
+
+
+
+
+
+
+
                 return s;
+
+
+
+
+
+
+
             });
+
+
+
+
+
+
+
             
+
+
+
+
+
+
+
             if (serious.length > 0 && serious[0] !== '.') hasSerious = true;
+
+
+
+
+
+
+
             
+
+
+
+
+
+
+
             seHtml += `<div class="se-drug-block">
+
+
+
+
+
+
+
                 <h4 class="se-drug-name">${formatDrugName(se.drugName)}</h4>`;
+
+
+
+
+
+
+
                 
+
+
+
+
+
+
+
             if (commons.length > 0 && commons[0] !== '.') {
+
+
+
+
+
+
+
                 seHtml += `<div class="se-section">
+
+
+
+
+
+
+
                     <div class="se-label-common">Common</div>
+
+
+
+
+
+
+
                     <ul class="se-list">${commons.map(c => `<li>${c}</li>`).join('')}</ul>
+
+
+
+
+
+
+
                 </div>`;
+
+
+
+
+
+
+
             }
+
+
+
+
+
+
+
             
-            if (serious.length > 0 && serious[0] !== '.') {
-                seHtml += `<div class="se-section se-serious-box">
-                    <div class="se-label-serious">🚨 Seek Help Immediately</div>
-                    <ul class="se-serious-list">${serious.map(c => `<li>${c}</li>`).join('')}</ul>
-                </div>`;
-            }
+
+
+
+
+
+
+
+            
+
+
+
+
+
+
+
             seHtml += `</div>`;
+
+
+
+
+
+
+
         });
+
+
+
+
+
+
+
     } else {
+
+
+
+
+
+
+
         seHtml += `<p style="color: var(--text-muted); margin: 0;">No specific side effects found.</p>`;
+
+
+
+
+
+
+
     }
+
+
+
+
+
+
+
     
+
+
+
+
+
+
+
     // Food Tab
+
+
+
+
+
+
+
     let foodHtml = `<h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--primary);">Food & Drink Guidance</h3>`;
+
+
+
+
+
+
+
     let foodCount = 0;
+
+
+
+
+
+
+
     if (data.foodWarnings && data.foodWarnings.length > 0) {
+
+
+
+
+
+
+
         foodCount = data.foodWarnings.length;
+
+
+
+
+
+
+
         const foodBullets = data.foodWarnings.map(w => {
+
+
+
+
+
+
+
             let s = w.charAt(0).toUpperCase() + w.slice(1);
+
+
+
+
+
+
+
             if (!s.endsWith('.')) s += '.';
+
+
+
+
+
+
+
             return `<li>${s}</li>`;
+
+
+
+
+
+
+
         });
+
+
+
+
+
+
+
         foodHtml += `<ul class="food-list">${foodBullets.join('')}</ul>`;
+
+
+
+
+
+
+
     } else {
+
+
+
+
+
+
+
         foodHtml += `<p style="color: var(--text-muted); margin: 0;">No specific food interactions detected.</p>`;
+
+
+
+
+
+
+
     }
+
+
+
+
+
+
+
     
+
+
+
+
+
+
+
     // Duplicates Tab
+
+
+
+
+
+
+
     let dupHtml = `<h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--primary);">Duplicate Therapy Alerts</h3>`;
+
+
+
+
+
+
+
     let dupCount = 0;
+
+
+
+
+
+
+
     if (data.duplicateWarnings && data.duplicateWarnings.length > 0) {
+
+
+
+
+
+
+
         dupCount = data.duplicateWarnings.length;
+
+
+
+
+
+
+
         
+
+
+
+
+
+
+
         const formattedWarnings = data.duplicateWarnings.map(w => {
+
+
+
+
+
+
+
             const d1 = formatDrugName(w.drug1);
+
+
+
+
+
+
+
             const d2 = formatDrugName(w.drug2);
+
+
+
+
+
+
+
             return `You may be taking ${d1} and ${d2} which contain the same active ingredient. Ask your pharmacist.`;
+
+
+
+
+
+
+
         });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         dupHtml += `<div class="interaction-item" style="border-left-color: var(--danger); background: rgba(239, 68, 68, 0.1);">
+
+
+
+
+
+
+
             <div style="color: #fca5a5; font-weight: 500;">
+
+
+
+
+
+
+
                 ${formattedWarnings.map(w => `<p style="margin: 0 0 0.5rem 0;">${w}</p>`).join('')}
+
+
+
+
+
+
+
             </div>
+
+
+
+
+
+
+
         </div>`;
+
+
+
+
+
+
+
     } else {
+
+
+
+
+
+
+
         dupHtml += `<p style="color: var(--text-muted); margin: 0;">No duplicate therapies detected.</p>`;
+
+
+
+
+
+
+
     }
+
+
+
+
+
+
+
     
+
+
+
+
+
+
+
     // Missing Tab
+
+
+
+
+
+
+
     let missingHtml = `<h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--primary);">Not in Database</h3>`;
+
+
+
+
+
+
+
     let missingCount = 0;
+
+
+
+
+
+
+
     if (data.missingFdaDrugs && data.missingFdaDrugs.length > 0) {
+
+
+
+
+
+
+
         missingCount = data.missingFdaDrugs.length;
+
+
+
+
+
+
+
         missingHtml += `
+
+
+
+
+
+
+
         <div style="color: var(--text-muted);">
+
+
+
+
+
+
+
             <p style="margin: 0 0 0.5rem 0;">Safety data unavailable for these medications. Consult your pharmacist.</p>
+
+
+
+
+
+
+
             <ul class="missing-list">${data.missingFdaDrugs.map(d => {
+
+
+
+
+
+
+
                 let s = formatDrugName(d);
+
+
+
+
+
+
+
                 s = s.charAt(0).toUpperCase() + s.slice(1);
+
+
+
+
+
+
+
                 if (!s.endsWith('.')) s += '.';
+
+
+
+
+
+
+
                 return `<li>${s}</li>`;
+
+
+
+
+
+
+
             }).join('')}</ul>
+
+
+
+
+
+
+
         </div>`;
+
+
+
+
+
+
+
     } else {
+
+
+
+
+
+
+
         missingHtml += `<p style="color: var(--text-muted); margin: 0;">All drugs found in database.</p>`;
+
+
+
+
+
+
+
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     // Build the Main Layout
+
+
+
+
+
+
+
     const layoutHtml = `
+
+
+
+
+
+
+
         <div id="tab-instructions" class="tab-content active">${instHtml}</div>
+
+
+
+
+
+
+
         <div id="tab-interactions" class="tab-content">${intHtml}</div>
+
+
+
+
+
+
+
         <div id="tab-side-effects" class="tab-content">${seHtml}</div>
+
+
+
+
+
+
+
         <div id="tab-food" class="tab-content">${foodHtml}</div>
+
+
+
+
+
+
+
         <div id="tab-duplicates" class="tab-content">${dupHtml}</div>
+
+
+
+
+
+
+
         <div id="tab-missing" class="tab-content">${missingHtml}</div>
+
+
+
+
+
+
+
         
+
+
+
+
+
+
+
         <div class="icon-bar">
+
+
+
+
+
+
+
             <button id="btn-tab-instructions" class="icon-btn active" onclick="switchTab('tab-instructions')" title="Instructions">
                 💊
-            </button>
+                </button>
+
+
+
+
+
+
+
             <button id="btn-tab-interactions" class="icon-btn" onclick="switchTab('tab-interactions')" title="Interactions">
                 ⚡
-                <div class="icon-badge badge-red ${intCount > 0 ? 'show' : ''}">!</div>
+                <span class="icon-badge badge-red ${intCount > 0 ? 'show' : ''}">!</span>
             </button>
+
+
+
+
+
+
+
             <button id="btn-tab-side-effects" class="icon-btn" onclick="switchTab('tab-side-effects')" title="Side Effects">
                 ⚠️
-                <div class="icon-badge badge-amber ${hasSerious ? 'show' : ''}">!</div>
+                <span class="icon-badge badge-amber ${hasSerious ? 'show' : ''}">!</span>
             </button>
+
+
+
+
+
+
+
             <button id="btn-tab-food" class="icon-btn" onclick="switchTab('tab-food')" title="Food & Drink">
-                🍔
-                <div class="icon-badge badge-green ${foodCount > 0 ? 'show' : ''}">!</div>
+                🍽️
+                <span class="icon-badge badge-green ${foodCount > 0 ? 'show' : ''}">!</span>
             </button>
+
+
+
+
+
+
+
             <button id="btn-tab-duplicates" class="icon-btn" onclick="switchTab('tab-duplicates')" title="Duplicates">
-                🔴
-                <div class="icon-badge badge-red ${dupCount > 0 ? 'show' : ''}">!</div>
-            </button>
+                📋
+                </button>
+
+
+
+
+
+
+
             <button id="btn-tab-missing" class="icon-btn" onclick="switchTab('tab-missing')" title="Not in Database">
-                ℹ️
-                <div class="icon-badge badge-grey ${missingCount > 0 ? 'show' : ''}">i</div>
-            </button>
+                ❓
+                </button>
+
+
+
+
+
+
+
         </div>
+
+
+
+
+
+
+
     `;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // Handle high risk banner integration
+
+
+
+
+
+
+
     const g = data.guardrails;
+
+
+
+
+
+
+
     if (g && g.block_flag) {
+
+
+
+
+
+
+
         const reasonsListHtml = (g.block_reasons || []).map(r => `<li style="margin-bottom: 0.5rem;">${r}</li>`).join('');
+
+
+
+
+
+
+
         const bannerHtml = `
+
+
+
+
+
+
+
         <div id="risk-banner-dynamic" style="background: rgba(245, 158, 11, 0.1); border: 1px solid #f59e0b; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;">
+
+
+
+
+
+
+
             <h3 style="color: #f59e0b; margin: 0 0 1rem 0; display: flex; align-items: center; gap: 0.5rem;">
+
+
+
+
+
+
+
                 <span style="font-size: 1.5rem;">⚠️</span> HIGH RISK IDENTIFIED
+
+
+
+
+
+
+
             </h3>
+
+
+
+
+
+
+
             <ul style="color: #fcd34d; padding-left: 1.5rem; margin-top: 0;">${reasonsListHtml}</ul>
+
+
+
+
+
+
+
             <button id="ack-btn" class="ack-button" style="margin-top: 1rem; border-color: #f59e0b; color: #f59e0b; background: transparent; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;">I understand the risks</button>
+
+
+
+
+
+
+
         </div>`;
+
+
+
+
+
+
+
         
+
+
+
+
+
+
+
         container.innerHTML = bannerHtml + `<div id="hidden-tabs-container" style="display: none;">${layoutHtml}</div>`;
+
+
+
+
+
+
+
         
+
+
+
+
+
+
+
         document.getElementById('ack-btn').onclick = function() {
+
+
+
+
+
+
+
             document.getElementById('risk-banner-dynamic').style.display = 'none';
+
+
+
+
+
+
+
             document.getElementById('hidden-tabs-container').style.display = 'block';
+
+
+
+
+
+
+
             showToast('✅ Acknowledged. Proceeding with caution.');
+
+
+
+
+
+
+
         };
+
+
+
+
+
+
+
     } else {
+
+
+
+
+
+
+
         container.innerHTML = layoutHtml;
+
+
+
+
+
+
+
     }
+
+
+
+
+
+
+
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 function resetForm() {
+
+
+
+
+
+
+
     document.getElementById('rx-form').reset();
+
+
+
+
+
+
+
     document.getElementById('results-section').style.display = 'none';
+
+
+
+
+
+
+
     document.getElementById('active-meds-notice').style.display = 'none';
+
+
+
+
+
+
+
 }
+
+
+
+
+
+
+
 </script>
+
+
+
+
+
+
+
 </body>
+
+
+
+
+
+
+
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
