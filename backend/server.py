@@ -4,6 +4,9 @@ import os
 import re
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Import agents
 from agents import parser_agent, lookup_agent, safety_agent, summarizer_agent, apply_guardrails, ocr_agent
@@ -108,6 +111,22 @@ class RxPlainHandler(SimpleHTTPRequestHandler):
             super().do_POST()
 
     def do_GET(self):
+        if self.path == '/api/config':
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            config = {
+                "apiKey": os.getenv("FIREBASE_API_KEY"),
+                "authDomain": os.getenv("FIREBASE_AUTH_DOMAIN"),
+                "projectId": os.getenv("FIREBASE_PROJECT_ID"),
+                "storageBucket": os.getenv("FIREBASE_STORAGE_BUCKET"),
+                "messagingSenderId": os.getenv("FIREBASE_MESSAGING_SENDER_ID"),
+                "appId": os.getenv("FIREBASE_APP_ID"),
+                "measurementId": os.getenv("FIREBASE_MEASUREMENT_ID")
+            }
+            self.wfile.write(json.dumps(config).encode('utf-8'))
+            return
+
         # Serve frontend files
         if self.path == '/':
             self.path = '/frontend/index.html'

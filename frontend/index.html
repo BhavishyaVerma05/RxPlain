@@ -630,46 +630,46 @@
 <div id="rx-toast"></div>
 
 <script>
-// ===== FIREBASE =====
-const firebaseConfig = {
-    apiKey: "AIzaSyDJlWm5_-5KkRSU4DQTxYxuQhK2F1MNm6k",
-    authDomain: "rxplain-8ebbb.firebaseapp.com",
-    projectId: "rxplain-8ebbb",
-    storageBucket: "rxplain-8ebbb.firebasestorage.app",
-    messagingSenderId: "911538568208",
-    appId: "1:911538568208:web:3a49eff05c649a45bf9e95",
-    measurementId: "G-D7RTTFC1EK"
-};
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db   = firebase.firestore();
+  // ===== FIREBASE =====
+  let auth;
+  let db;
+  let currentUser      = null;
+  let activeReminders  = [];
+  let reminderTimeouts = [];
 
-let currentUser      = null;
-let activeReminders  = [];
-let reminderTimeouts = [];
+  (async function initApp() {
+      try {
+          const config = await fetch('/api/config').then(r => r.json());
+          firebase.initializeApp(config);
+          auth = firebase.auth();
+          db   = firebase.firestore();
 
-// ===== AUTH =====
-auth.onAuthStateChanged(async user => {
-    if (user) {
-        currentUser = user;
-        document.getElementById('login-overlay').style.display = 'none';
-        document.getElementById('main-app').style.display     = 'block';
-        if (user.photoURL) document.getElementById('user-avatar').src = user.photoURL;
-        document.getElementById('user-name').textContent = user.displayName || user.email;
-
-        await requestNotifPermission();
-        await Promise.all([loadHistory(user.uid), loadAndScheduleReminders(user.uid)]);
-
-        const meds = await getActiveMedications(user.uid);
-        if (meds.length > 0) {
-            populateActiveMeds(meds);
-        }
-    } else {
-        currentUser = null;
-        document.getElementById('login-overlay').style.display = 'flex';
-        document.getElementById('main-app').style.display     = 'none';
-    }
-});
+          // ===== AUTH =====
+          auth.onAuthStateChanged(async user => {
+              if (user) {
+                  currentUser = user;
+                  document.getElementById('login-overlay').style.display = 'none';
+                  document.getElementById('main-app').style.display     = 'block';
+                  if (user.photoURL) document.getElementById('user-avatar').src = user.photoURL;
+                  document.getElementById('user-name').textContent = user.displayName || user.email;
+          
+                  await requestNotifPermission();
+                  await Promise.all([loadHistory(user.uid), loadAndScheduleReminders(user.uid)]);
+          
+                  const meds = await getActiveMedications(user.uid);
+                  if (meds.length > 0) {
+                      populateActiveMeds(meds);
+                  }
+              } else {
+                  currentUser = null;
+                  document.getElementById('login-overlay').style.display = 'flex';
+                  document.getElementById('main-app').style.display     = 'none';
+              }
+          });
+      } catch (err) {
+          console.error("Failed to initialize Firebase:", err);
+      }
+  })();
 
 function signInWithGoogle() {
     auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())
